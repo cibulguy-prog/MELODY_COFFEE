@@ -370,10 +370,17 @@ async function sheetsLoad(silent) {
     S.settings = { ...DEF, ...(j.settings || {}) };
     ui.sheetUrl = j.sheetUrl; mode = 'sheets'; ui.loginErr = '';
     scheduleRender();
+    if (!COLS.some(c => S[c].length) && !S.settings.sampleDone && typeof buildSample === 'function') seedSample();
   } catch (e) {
     if (e.code === 'auth') logout(token ? (silent ? 'צריך להתחבר מחדש.' : 'סיסמה שגויה.') : 'למערכת הוגדרה סיסמה. צריך להקליד אותה.');
     else if (!silent) { mode = 'login'; ui.loginErr = 'לא הצלחתי להתחבר לגיליון. בדוק את הכתובת והחיבור לאינטרנט.'; render(); }
   }
+}
+async function seedSample() {
+  const s = buildSample(); const w = [];
+  COLS.forEach(c => (s[c] || []).forEach(o => w.push(() => put(c, o))));
+  await bulk(w); saveSettings({ sampleDone: true });
+  toast('נטענו נתוני דוגמה להמחשה');
 }
 function logout(msg) { token = ''; lsSet('melody-token', ''); mode = 'login'; ui.loginErr = msg || ''; render(); }
 async function login(url, pass) {
@@ -1002,13 +1009,13 @@ PAGES.data = () => {
   const listField = (k, l) => `<label class="field" for="set-${k}">${l}<textarea id="set-${k}" rows="3" data-setting="${k}" data-list ${dis()}>${esc((s[k] || []).join(', '))}</textarea></label>`;
   return `<div class="head"><div><h2>נתונים והגדרות</h2><p class="lead">ייבוא הנתונים מהאקסל שבעל העסק ממלא, גיבוי לאקסל, והגדרות החישוב.</p></div></div>
   <section class="panel"><h3>ייבוא מאקסל</h3>
-    <p class="muted" style="margin:0 0 10px">בוחרים את קובץ האקסל של איסוף הנתונים. שורות הדוגמה בקובץ מדולגות אוטומטית. לפני השמירה מוצג סיכום של מה שנמצא.</p>
+    <p class="muted" style="margin:0 0 10px">בוחרים את קובץ האקסל של איסוף הנתונים, או קובץ שיוצא מכאן ועודכן. שורות הדוגמה בקובץ מדולגות אוטומטית. לפני השמירה מוצג סיכום של מה שנמצא. אפשר לייבא קובץ מעודכן שוב בכל פעם, וגם לערוך כל נתון ישירות במערכת.</p>
     <div class="row"><label class="btn ${readonly ? '' : 'pri'}" for="impFile">בחירת קובץ אקסל</label><input id="impFile" type="file" accept=".xlsx,.xls,.csv" hidden ${dis()}>${typeof XLSX === 'undefined' ? '<small class="neg">ספריית האקסל לא נטענה. בדוק חיבור לאינטרנט.</small>' : ''}</div>
     ${imp ? `<div style="margin-top:12px" class="grid">
       <div class="tbl"><table><thead><tr><th>גיליון</th><th>שורות שנמצאו</th></tr></thead><tbody>${imp.summary.map(([k, n]) => `<tr><td>${esc(k)}</td><td class="num">${n}</td></tr>`).join('')}</tbody></table></div>
       ${imp.warnings.length ? `<div class="banner"><b>שימו לב:</b> ${imp.warnings.slice(0, 8).map(esc).join(' · ')}${imp.warnings.length > 8 ? ` ועוד ${imp.warnings.length - 8}` : ''}</div>` : ''}
-      <div class="row"><button class="btn pri" data-act="impApply" data-mode="replace" ${dis()}>החלפת כל הנתונים בנתונים מהקובץ</button><button class="btn" data-act="impApply" data-mode="merge" ${dis()}>הוספה לנתונים הקיימים</button><button class="btn ghost" data-act="impCancel">ביטול</button></div>
-      <small class="note">"החלפה" מוחקת את כל נתוני הדוגמה ואת מה שנמצא כרגע בגיליונות שיובאו, ושומרת את השאר.</small></div>` : ''}
+      <div class="row"><button class="btn pri" data-act="impApply" data-mode="replace" ${dis()}>עדכון המערכת לפי הקובץ</button><button class="btn" data-act="impApply" data-mode="merge" ${dis()}>הוספה לנתונים הקיימים</button><button class="btn ghost" data-act="impCancel">ביטול</button></div>
+      <small class="note">"עדכון לפי הקובץ" מוחק את נתוני הדוגמה, ומחליף כל טבלה שמופיעה בקובץ בגרסה שבקובץ. טבלאות שלא בקובץ (למשל יומן ההוצאות) נשארות כמו שהן. "הוספה" רק מוסיפה שורות חדשות.</small></div>` : ''}
     ${ui.impBusy ? `<p class="muted">${esc(ui.impBusy)}</p>` : ''}
   </section>
   ${mode === 'sheets' ? `<section class="panel"><h3>חיבור לגוגל שיטס</h3><div class="row">
@@ -1081,7 +1088,7 @@ document.addEventListener('click', async e => {
   if (a === 'goLocal') { lsSet('melody-local', '1'); mode = 'local'; loadLocal(); render(); return; }
   if (a === 'goSheets') { lsSet('melody-local', ''); location.reload(); return; }
   if (a === 'refresh') { sheetsLoad(false).then(() => toast('הנתונים עודכנו')); return; }
-  if (a === 'loadSample') { const s = buildSample(); const w = []; COLS.forEach(c => (s[c] || []).forEach(o => w.push(() => put(c, o)))); await bulk(w); toast('נתוני הדוגמה נטענו'); return; }
+  if (a === 'loadSample') { seedSample(); return; }
   if (a === 'showIssue') { setTimeout(() => $('#salesIssue')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 250); return; }
   if (a === 'optDish') { ui.optId = id; ui.sim = null; ui.claude = ''; return; }
   if (a === 'addDish') { const nid = newId('d'); await put('dishes', { id: nid, name: 'מנה חדשה', category: '', price: 0, monthlySales: 0, items: [] }); ui.dishId = nid; render(); $('#dn-' + nid)?.select(); return; }

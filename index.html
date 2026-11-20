@@ -328,7 +328,7 @@ function loadLocal() {
   if (!data && typeof buildSample === 'function') data = buildSample();
   if (data) { COLS.forEach(c => (S[c] = data[c] || [])); S.settings = { ...DEF, ...(data.settings || {}) }; }
 }
-function saveLocal() { try { const o = { settings: S.settings }; COLS.forEach(c => (o[c] = S[c])); localStorage.setItem(LS, JSON.stringify(o)); } catch (e) { } }
+function saveLocal() { if (mode !== 'local') return; try { const o = { settings: S.settings }; COLS.forEach(c => (o[c] = S[c])); localStorage.setItem(LS, JSON.stringify(o)); } catch (e) { } }
 const chains = {};
 function serial(key, fn) { const p = (chains[key] || Promise.resolve()).then(fn, fn); chains[key] = p.catch(() => { }); return p; }
 function clean(o) { const r = {}; for (const k in o) if (k !== 'id' && o[k] !== undefined) r[k] = o[k]; return r; }
@@ -372,8 +372,12 @@ async function sheetsLoad(silent) {
     scheduleRender();
     if (!COLS.some(c => S[c].length) && !S.settings.sampleDone && typeof buildSample === 'function') seedSample();
   } catch (e) {
-    if (e.code === 'auth') logout(token ? (silent ? 'צריך להתחבר מחדש.' : 'סיסמה שגויה.') : 'למערכת הוגדרה סיסמה. צריך להקליד אותה.');
-    else if (!silent) { mode = 'login'; ui.loginErr = 'לא הצלחתי להתחבר לגיליון. בדוק את הכתובת והחיבור לאינטרנט.'; render(); }
+    if (silent) return;
+    if (e.code === 'auth' && token) { logout('סיסמה שגויה.'); return; }
+    ui.connErr = e.code === 'auth' ? 'בסקריפט בגוגל מוגדרת סיסמה. צריך להדביק ב-Apps Script את Code.gs העדכני (בלי סיסמה) ולפרוס גרסה חדשה.'
+      : e.code === 'server' ? 'הסקריפט בגוגל החזיר שגיאה: ' + (e.message || '') + '. כדאי לוודא שהרצת את setup.'
+      : 'לא הצלחתי להתחבר לגוגל שיטס. כדאי לבדוק שהפריסה מוגדרת "למי יש גישה: כל אחד" ושהכתובת נכונה.';
+    mode = 'demo'; const s = buildSample(); COLS.forEach(c => (S[c] = s[c] || [])); S.settings = { ...DEF }; render();
   }
 }
 async function seedSample() {
@@ -571,6 +575,7 @@ function render() {
   if (readonly) html += `<div class="banner"><b>מצב צפייה.</b> אפשר לראות הכול, אבל רק בעל העסק או עורך יכול לשנות נתונים.</div>`;
   if (hasSample()) html += `<div class="banner"><span style="flex:1 1 200px"><b>נתוני דוגמה</b> להמחשה בלבד, עד שיגיעו הנתונים של בעל העסק.</span>${route !== 'data' ? '<a class="btn" href="#data">ייבוא מאקסל</a>' : ''}</div>`;
   if (mode === 'sheets' && !COLS.some(c => S[c].length) && route !== 'data') html += `<div class="banner" style="border-color:var(--accent);background:var(--accent-soft)"><span style="flex:1 1 200px">הגיליון ריק עדיין. מתחילים בייבוא האקסל של בעל העסק, או בטעינת נתוני דוגמה כדי לראות איך זה עובד.</span><a class="btn" href="#data">ייבוא נתונים</a></div>`;
+  if (mode === 'demo') html += `<div class="banner" style="border-color:var(--bad);background:var(--bad-soft)"><span style="flex:1 1 220px"><b style="color:var(--bad)">אין חיבור לגיליון, ולכן מוצגים נתוני דוגמה בלבד ושינויים לא נשמרים.</b><br>${esc(ui.connErr || '')}</span><button class="btn" data-act="retryConn">ניסיון חוזר</button></div>`;
   if (mode === 'local') html += `<div class="banner" style="border-color:var(--line);background:var(--sunk)"><span class="muted" style="flex:1 1 200px">מצב מקומי: הנתונים נשמרים רק בדפדפן הזה.</span><button class="btn" data-act="goSheets">חיבור לגוגל שיטס</button></div>`;
   html += (PAGES[route] || PAGES.overview)();
   app.innerHTML = html;
@@ -1085,6 +1090,7 @@ document.addEventListener('click', async e => {
   if (a === 'closeDish') { ui.dishId = null; render(); return; }
   if (a === 'flushNow') { sq.fails = 0; ui.sync = 'saving'; flush(); render(); return; }
   if (a === 'logout') { logout(''); return; }
+  if (a === 'retryConn') { mode = 'loading'; render(); sheetsLoad(false); return; }
   if (a === 'goLocal') { lsSet('melody-local', '1'); mode = 'local'; loadLocal(); render(); return; }
   if (a === 'goSheets') { lsSet('melody-local', ''); location.reload(); return; }
   if (a === 'refresh') { sheetsLoad(false).then(() => toast('הנתונים עודכנו')); return; }

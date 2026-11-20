@@ -1,0 +1,1223 @@
+<title>קופת מלודי</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=Rubik:wght@500;700&display=swap">
+<style>
+/* Layout: sticky brand bar + scrollable section tabs; content is a single column of panels, tables scroll inside their own frames. */
+:root{
+  --bg:#F3F2EE; --surface:#FFFFFF; --sunk:#ECEAE4; --ink:#1E1A17; --muted:#6A615B; --line:#DFDBD3;
+  --accent:#1D5C50; --accent-ink:#FFFFFF; --accent-soft:#DDEBE7; --crema:#B9874A;
+  --good:#24774A; --good-soft:#DDF0E4; --warn:#9A6408; --warn-soft:#F8EBCF; --bad:#B23A2B; --bad-soft:#F7DEDA;
+  --f-display:"Rubik","Heebo",system-ui,sans-serif; --f-body:"Heebo",system-ui,"Segoe UI",Arial,sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141312; --surface:#1D1B19; --sunk:#262320; --ink:#F0EBE5; --muted:#A79E96; --line:#35312D;
+  --accent:#62B9A6; --accent-ink:#0B1D19; --accent-soft:#1D3330; --crema:#D6A86E;
+  --good:#63C98F; --good-soft:#173322; --warn:#E3AE52; --warn-soft:#3A2C12; --bad:#F08272; --bad-soft:#3D1D19; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141312; --surface:#1D1B19; --sunk:#262320; --ink:#F0EBE5; --muted:#A79E96; --line:#35312D;
+  --accent:#62B9A6; --accent-ink:#0B1D19; --accent-soft:#1D3330; --crema:#D6A86E;
+  --good:#63C98F; --good-soft:#173322; --warn:#E3AE52; --warn-soft:#3A2C12; --bad:#F08272; --bad-soft:#3D1D19; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;direction:rtl}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{display:flex;align-items:center;gap:12px;padding-block:10px 6px;flex-wrap:wrap}
+.brand h1{font-family:var(--f-display);font-size:1.25rem;margin:0;letter-spacing:-.01em}
+.brand .cup{width:28px;height:28px;flex:none}
+.brand .grow{flex:1}
+.month{display:flex;align-items:center;gap:6px;font-size:.9rem;color:var(--muted)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;padding-block:4px 8px;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs a{flex:none;text-decoration:none;color:var(--muted);padding:6px 12px;border-radius:999px;font-weight:500;font-size:.92rem;white-space:nowrap}
+nav.tabs a[aria-current="page"]{background:var(--accent);color:var(--accent-ink)}
+nav.tabs a:hover{color:var(--ink)} nav.tabs a[aria-current="page"]:hover{color:var(--accent-ink)}
+main{padding-block:18px 60px;display:grid;gap:18px}
+h2{font-family:var(--f-display);font-size:1.35rem;margin:0;text-wrap:balance}
+h3{font-family:var(--f-display);font-size:1.05rem;margin:0 0 10px;text-wrap:balance}
+.lead{color:var(--muted);margin:2px 0 0;max-width:68ch}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.kpis{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.kpi .l{font-size:.8rem;color:var(--muted);letter-spacing:.02em}
+.kpi .v{font-family:var(--f-display);font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:.82rem;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.muted{color:var(--muted)}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-weight:500;color:var(--muted);font-size:.8rem;background:var(--sunk);white-space:nowrap;position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+tfoot td{font-weight:700;background:var(--sunk)}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--sunk)}
+tr.sel td{background:var(--accent-soft)}
+input,select,textarea,button{font:inherit;color:inherit}
+input,select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:5px 7px;min-width:0}
+td input,td select{width:100%;border-color:transparent;background:transparent;padding:4px 5px}
+td input:hover,td select:hover{border-color:var(--line)}
+td input:focus,td select:focus,input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent;background:var(--surface)}
+input[type=number]{direction:ltr;text-align:right}
+td input.w-num{width:6.5em} td input.w-date{width:9.5em} td input.w-s{width:8em} td input.w-m{min-width:11em}
+input:disabled,select:disabled{opacity:.8}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:500;font-size:.9rem;text-decoration:none;color:var(--ink)}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:4px 6px}
+.btn.ghost:hover{color:var(--bad)}
+.btn.danger{color:var(--bad)}
+.btn:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 9px;font-size:.78rem;font-weight:500;white-space:nowrap;background:var(--sunk);color:var(--muted)}
+.chip.good{background:var(--good-soft);color:var(--good)} .chip.warn{background:var(--warn-soft);color:var(--warn)} .chip.bad{background:var(--bad-soft);color:var(--bad)} .chip.acc{background:var(--accent-soft);color:var(--accent)}
+.chip i{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+.banner{border-radius:var(--r);padding:8px 12px;font-size:.9rem;background:var(--warn-soft);color:var(--ink);border:1px dashed var(--warn);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner b{color:var(--warn)}
+.bars{display:grid;gap:8px}
+.bar{display:grid;grid-template-columns:minmax(6em,9em) 1fr auto;gap:10px;align-items:center;font-size:.9rem}
+.bar .t{height:10px;background:var(--sunk);border-radius:5px;overflow:hidden}
+.bar .t span{display:block;height:100%;background:var(--accent);border-radius:5px}
+.bar.exp .t span{background:var(--crema)}
+.cols{display:flex;align-items:flex-end;gap:14px;height:170px;padding-top:10px;border-bottom:1px solid var(--line)}
+.cols .m{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;min-width:0}
+.cols .pair{display:flex;gap:3px;align-items:flex-end;height:100%;width:100%;justify-content:center}
+.cols .pair span{width:min(22px,40%);border-radius:4px 4px 0 0;min-height:2px}
+.cols .inc{background:var(--accent)} .cols .exp{background:var(--crema)}
+.cols-l{display:flex;gap:14px} .cols-l div{flex:1;text-align:center;font-size:.78rem;color:var(--muted);padding-top:4px}
+.legend{display:flex;gap:14px;font-size:.82rem;color:var(--muted)} .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-inline-end:5px;vertical-align:-1px;background:var(--c)}
+.split{display:grid;gap:16px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
+@media (max-width:820px){.split{grid-template-columns:1fr}}
+.field{display:grid;gap:4px;font-size:.85rem;color:var(--muted)}
+.field input,.field select,.field textarea{color:var(--ink);font-size:.95rem}
+.form{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))}
+.stat{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:.93rem}
+.stat dt{color:var(--muted)} .stat dd{margin:0;font-variant-numeric:tabular-nums;font-weight:500;text-align:left}
+.stat dd.big{font-family:var(--f-display);font-size:1.15rem}
+.sugg{display:grid;gap:8px}
+.sugg li{list-style:none;border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.sugg ul{margin:0;padding:0;display:grid;gap:8px}
+.sugg .gain{color:var(--good);font-weight:700;font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);text-align:center;padding:22px 10px}
+.toast{position:fixed;inset-inline:0;bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;pointer-events:none;z-index:20}
+.toast div{background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:.9rem;box-shadow:0 4px 18px rgb(0 0 0/.18)}
+.share{height:6px;background:var(--sunk);border-radius:3px;overflow:hidden;min-width:60px}
+.share span{display:block;height:100%;background:var(--crema)}
+.claude-out{white-space:pre-wrap;background:var(--sunk);border-radius:8px;padding:12px;font-size:.93rem;max-height:420px;overflow:auto}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:5px 11px;cursor:pointer;font-size:.88rem;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:700}
+details summary{cursor:pointer;font-weight:500}
+small.note{color:var(--muted);font-size:.8rem}
+@media (prefers-reduced-motion:no-preference){.bar .t span,.share span{transition:width .3s}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg class="cup" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 11h17v9a7 7 0 0 1-7 7h-3a7 7 0 0 1-7-7z" fill="var(--accent)"/><path d="M23 13h2.5a3.5 3.5 0 0 1 0 7H23" fill="none" stroke="var(--accent)" stroke-width="2.4"/><path d="M11 4c-1.5 2 1.5 3 0 5M16 4c-1.5 2 1.5 3 0 5" stroke="var(--crema)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      <h1>קופת מלודי</h1>
+      <span class="grow"></span>
+      <label class="month" for="monthSel">חודש <input type="month" id="monthSel"></label>
+    </div>
+    <nav class="tabs" id="tabs"></nav>
+  </div>
+</header>
+<main class="wrap" id="app"><div class="empty">טוען נתונים…</div></main>
+<div class="toast" id="toast" hidden><div></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// נתוני דוגמה בלבד – כל רשומה מסומנת sample:true. מוחלפים בנתונים האמיתיים של בעל העסק.
+function buildSample() {
+  const T = { sample: true };
+  const ing = (id, name, category, supplier, packQty, packUnit, packPrice, waste) =>
+    ({ id, name, category, supplier, packQty, packUnit, packPrice, waste, notes: '', ...T });
+  const ingredients = [
+    ing('i_beans', 'פולי קפה – בלנד אספרסו', 'קפה', 'בית קלייה (דוגמה)', 1, 'kg', 120, 2),
+    ing('i_milk', 'חלב 3%', 'חלב ותחליפי חלב', 'מחלבה (דוגמה)', 1, 'l', 7.2, 6),
+    ing('i_milk1', 'חלב 1%', 'חלב ותחליפי חלב', 'מחלבה (דוגמה)', 1, 'l', 6.6, 6),
+    ing('i_oat', 'משקה שיבולת שועל – בריסטה', 'חלב ותחליפי חלב', 'מחלבה (דוגמה)', 1, 'l', 16, 5),
+    ing('i_oat2', 'משקה שיבולת שועל – מותג פרטי', 'חלב ותחליפי חלב', 'מחלבה (דוגמה)', 1, 'l', 11.5, 5),
+    ing('i_soy', 'משקה סויה', 'חלב ותחליפי חלב', 'מחלבה (דוגמה)', 1, 'l', 13, 5),
+    ing('i_vanilla', 'סירופ וניל', 'סירופים ורטבים', 'ספק חד-פעמי (דוגמה)', 750, 'ml', 45, 0),
+    ing('i_cocoa', 'אבקת שוקו', 'מרכיבי מזון', 'ספק חד-פעמי (דוגמה)', 1, 'kg', 48, 0),
+    ing('i_tea', 'שקיק תה', 'מרכיבי מזון', 'ספק חד-פעמי (דוגמה)', 100, 'unit', 30, 0),
+    ing('i_mint', 'נענע טרייה', 'מרכיבי מזון', 'ירקן (דוגמה)', 100, 'g', 6, 20),
+    ing('i_ice', 'קרח', 'מרכיבי מזון', 'ספק חד-פעמי (דוגמה)', 2, 'kg', 8, 10),
+    ing('i_sugar', 'סוכר בשקיקים', 'חד-פעמי ואריזות', 'ספק חד-פעמי (דוגמה)', 1000, 'unit', 60, 0),
+    ing('i_croissant', 'קרואסון חמאה', 'מאפים ומוצרים מוכנים', 'מאפייה (דוגמה)', 1, 'unit', 5.5, 8),
+    ing('i_cookie', 'עוגיית שוקולד צ\'יפס', 'מאפים ומוצרים מוכנים', 'מאפייה (דוגמה)', 1, 'unit', 3.2, 5),
+    ing('i_cup8', 'כוס נייר 8oz', 'חד-פעמי ואריזות', 'ספק חד-פעמי (דוגמה)', 50, 'unit', 22, 2),
+    ing('i_cup12', 'כוס נייר 12oz', 'חד-פעמי ואריזות', 'ספק חד-פעמי (דוגמה)', 50, 'unit', 26, 2),
+    ing('i_lid', 'מכסה לכוס', 'חד-פעמי ואריזות', 'ספק חד-פעמי (דוגמה)', 100, 'unit', 25, 2),
+    ing('i_stir', 'בוחשן עץ', 'חד-פעמי ואריזות', 'ספק חד-פעמי (דוגמה)', 1000, 'unit', 20, 0),
+    ing('i_bag', 'שקית נייר למאפה', 'חד-פעמי ואריזות', 'ספק חד-פעמי (דוגמה)', 100, 'unit', 20, 0),
+  ];
+  const L = (ingId, qty) => ({ ingId, qty });
+  const dish = (id, name, category, price, monthlySales, items) => ({ id, name, category, price, monthlySales, items, ...T });
+  const cup12 = [L('i_cup12', 1), L('i_lid', 1), L('i_stir', 1), L('i_sugar', 1)];
+  const cup8 = [L('i_cup8', 1), L('i_lid', 1), L('i_stir', 1), L('i_sugar', 1)];
+  const dishes = [
+    dish('d_esp', 'אספרסו קצר', 'קפה חם', 8, 300, [L('i_beans', 9), L('i_cup8', 1), L('i_sugar', 1)]),
+    dish('d_dbl', 'אספרסו כפול', 'קפה חם', 11, 250, [L('i_beans', 18), L('i_cup8', 1), L('i_sugar', 1)]),
+    dish('d_lat_s', 'הפוך קטן', 'קפה חם', 13, 600, [L('i_beans', 18), L('i_milk', 180), ...cup8]),
+    dish('d_lat_l', 'הפוך גדול', 'קפה חם', 16, 700, [L('i_beans', 18), L('i_milk', 280), ...cup12]),
+    dish('d_oat', 'הפוך שיבולת שועל גדול', 'קפה חם', 19, 180, [L('i_beans', 18), L('i_oat', 280), ...cup12]),
+    dish('d_van', 'לאטה וניל גדול', 'קפה חם', 18, 40, [L('i_beans', 18), L('i_milk', 250), L('i_vanilla', 30), ...cup12]),
+    dish('d_choc', 'שוקו חם', 'שתייה חמה אחרת', 15, 120, [L('i_milk', 280), L('i_cocoa', 25), ...cup12]),
+    dish('d_ice', 'אייס קפה', 'קפה קר', 17, 150, [L('i_beans', 18), L('i_milk', 200), L('i_ice', 150), ...cup12]),
+    dish('d_tea', 'תה נענע', 'שתייה חמה אחרת', 10, 90, [L('i_tea', 1), L('i_mint', 10), ...cup12]),
+    dish('d_crois', 'קרואסון חמאה', 'מאפים', 14, 200, [L('i_croissant', 1), L('i_bag', 1)]),
+    dish('d_cookie', 'עוגיית שוקולד צ\'יפס', 'מאפים', 8, 60, [L('i_cookie', 1), L('i_bag', 1)]),
+  ];
+  const rc = (id, kind, name, category, amount, freq, low, high) => ({ id, kind, name, category, amount, freq, low: low || '', high: high || '', payee: '', method: '', notes: '', ...T });
+  const recurring = [
+    rc('f_spot', 'fixed', 'דמי מקום לעגלה', 'מקום / שכירות / דמי הצבה', 3500, 'monthly'),
+    rc('f_ins', 'fixed', 'ביטוח עסק וציוד', 'ביטוחים', 3600, 'yearly'),
+    rc('f_lic', 'fixed', 'רישיון עסק ואגרות', 'רישיונות ואגרות', 1200, 'yearly'),
+    rc('f_acc', 'fixed', 'הנהלת חשבונות', 'הנהלת חשבונות ורו"ח', 700, 'monthly'),
+    rc('f_pos', 'fixed', 'מסוף אשראי וקופה', 'תוכנות, קופה ומנויים', 120, 'monthly'),
+    rc('v_gas', 'variable', 'גז ובלונים', 'דלק / גז / גנרטור', 380, 'monthly', 300, 480),
+    rc('v_fuel', 'variable', 'דלק וגרירת עגלה', 'דלק / גז / גנרטור', 600, 'monthly', 450, 800),
+    rc('v_mach', 'variable', 'תחזוקת מכונת אספרסו', 'תיקונים ותחזוקה', 500, 'monthly', 0, 1500),
+    rc('v_fees', 'variable', 'עמלות סליקה', 'עמלות סליקה', 430, 'monthly', 350, 520),
+  ];
+  const channels = [
+    { id: 'c_card', name: 'מכירה בעגלה – אשראי', avg: 27000, low: 22000, high: 32000, fee: 1.2, source: 'דוח קופה', notes: '', ...T },
+    { id: 'c_cash', name: 'מכירה בעגלה – מזומן', avg: 8200, low: 6500, high: 9500, fee: 0, source: 'הערכה', notes: '', ...T },
+    { id: 'c_bit', name: 'מכירה בעגלה – ביט / פייבוקס', avg: 6000, low: 4800, high: 7200, fee: 0, source: 'הערכה', notes: '', ...T },
+    { id: 'c_events', name: 'אירועים וקייטרינג', avg: 2500, low: 0, high: 6000, fee: 0, source: 'הערכה', notes: '', ...T },
+  ];
+  const suppliers = [
+    { id: 's_roast', name: 'בית קלייה (דוגמה)', contact: 'נציג מכירות', phone: '03-0000000', website: 'https://example.com', terms: 'net30', ...T },
+    { id: 's_dairy', name: 'מחלבה (דוגמה)', contact: '', phone: '', website: '', terms: 'immediate', ...T },
+    { id: 's_bakery', name: 'מאפייה (דוגמה)', contact: '', phone: '', website: '', terms: 'immediate', ...T },
+    { id: 's_disp', name: 'ספק חד-פעמי (דוגמה)', contact: '', phone: '', website: '', terms: 'net60', ...T },
+    { id: 's_veg', name: 'ירקן (דוגמה)', contact: '', phone: '', website: '', terms: 'immediate', ...T },
+  ];
+  const expenses = [], income = [], invoices = [];
+  const months = [['2026-09', 30], ['2026-10', 31], ['2026-11', 19]];
+  let n = 0;
+  months.forEach(([m, days], mi) => {
+    const d = (day) => `${m}-${String(day).padStart(2, '0')}`;
+    const e = (day, category, desc, supplier, amount, method) =>
+      expenses.push({ id: 'e' + (++n), date: d(day), category, desc, supplier, amount, method, ...T });
+    e(1, 'מקום / שכירות / דמי הצבה', 'דמי מקום', 'רשות המקום (דוגמה)', 3500, 'העברה בנקאית');
+    e(3, 'דלק / גז / גנרטור', 'מילוי גז', 'ספק גז (דוגמה)', 340 + mi * 15, 'כרטיס אשראי');
+    e(5, 'חומרי גלם ואריזות', 'חלב – משלוח שבועי', 'מחלבה (דוגמה)', 980 + mi * 40, 'כרטיס אשראי');
+    e(12, 'חומרי גלם ואריזות', 'חלב – משלוח שבועי', 'מחלבה (דוגמה)', 1010 + mi * 30, 'כרטיס אשראי');
+    if (days > 19) e(19, 'חומרי גלם ואריזות', 'חלב – משלוח שבועי', 'מחלבה (דוגמה)', 990, 'כרטיס אשראי');
+    e(8, 'חומרי גלם ואריזות', 'מאפים – שבועיים', 'מאפייה (דוגמה)', 1150 + mi * 60, 'מזומן');
+    e(10, 'דלק / גז / גנרטור', 'דלק', 'תחנת דלק', 290 + mi * 10, 'כרטיס אשראי');
+    e(15, 'הנהלת חשבונות ורו"ח', 'הנהלת חשבונות', 'רואת חשבון (דוגמה)', 700, 'העברה בנקאית');
+    e(2, 'חומרי גלם ואריזות', 'פולי קפה – הזמנה דו-שבועית', 'בית קלייה (דוגמה)', 2400 + mi * 120, 'העברה בנקאית');
+    if (days > 16) e(16, 'חומרי גלם ואריזות', 'פולי קפה – הזמנה דו-שבועית', 'בית קלייה (דוגמה)', 2400, 'העברה בנקאית');
+    e(6, 'חומרי גלם ואריזות', 'כוסות, מכסים וסוכר', 'ספק חד-פעמי (דוגמה)', 1700 + mi * 80, 'העברה בנקאית');
+    if (days > 15) e(15, 'חומרי גלם ואריזות', 'מאפים – שבועיים', 'מאפייה (דוגמה)', 1180, 'מזומן');
+    if (days > 26) e(26, 'חומרי גלם ואריזות', 'חלב – משלוח שבועי', 'מחלבה (דוגמה)', 1000, 'כרטיס אשראי');
+    if (days > 28) e(28, 'שכר עובדים', 'שכר עובד/ת משמרת', 'עובד/ת (דוגמה)', 6200, 'העברה בנקאית');
+    e(16, 'עמלות סליקה', 'עמלות אשראי', 'חברת סליקה', 410 + mi * 25, 'הוראת קבע');
+    if (mi === 1) e(20, 'תיקונים ותחזוקה', 'טיפול תקופתי למכונה', 'טכנאי (דוגמה)', 1500, 'העברה בנקאית');
+    if (mi === 0) e(22, 'שיווק ופרסום', 'הדפסת תפריטים ושלט', 'דפוס (דוגמה)', 450, 'כרטיס אשראי');
+    const weeks = Math.ceil(days / 7);
+    for (let w = 0; w < weeks; w++) {
+      const day = Math.min(days, w * 7 + 7);
+      const base = 1 + mi * 0.04 + (w % 2) * 0.05;
+      const inc = (category, amount) => income.push({ id: 'n' + (++n), date: d(day), category, desc: `קופה שבוע ${w + 1}`, amount: Math.round(amount * base), ...T });
+      inc('מכירה בעגלה – אשראי', 6200); inc('מכירה בעגלה – מזומן', 1900); inc('מכירה בעגלה – ביט / פייבוקס', 1400);
+    }
+    if (mi === 1) income.push({ id: 'n' + (++n), date: d(24), category: 'אירועים וקייטרינג', desc: 'עמדת קפה באירוע חברה', amount: 3800, ...T });
+  });
+  const inv = (id, supplier, number, date, amount, terms, paid, paidDate) =>
+    invoices.push({ id, supplier, number, date, amount, terms, status: paid ? 'paid' : 'unpaid', paidDate: paidDate || '', method: '', sentToAccountant: paid, fileId: '', fileName: '', notes: '', ...T });
+  inv('v1', 'בית קלייה (דוגמה)', '10452', '2026-09-04', 2400, 'net30', true, '2026-10-30');
+  inv('v2', 'בית קלייה (דוגמה)', '10511', '2026-10-06', 2640, 'net30', false);
+  inv('v3', 'בית קלייה (דוגמה)', '10588', '2026-11-03', 2400, 'net30', false);
+  inv('v4', 'ספק חד-פעמי (דוגמה)', 'A-3391', '2026-09-12', 1860, 'net60', false);
+  inv('v5', 'ספק חד-פעמי (דוגמה)', 'A-3460', '2026-10-15', 940, 'net60', false);
+  inv('v6', 'מחלבה (דוגמה)', '77812', '2026-11-12', 1040, 'immediate', true, '2026-11-12');
+  inv('v7', 'מאפייה (דוגמה)', '2291', '2026-11-08', 1270, 'immediate', false);
+  const settings = { sampleLoaded: true };
+  return { ingredients, dishes, recurring, channels, suppliers, expenses, income, invoices, settings };
+}
+if (typeof module !== 'undefined') module.exports = { buildSample };
+
+</script>
+<script>
+'use strict';
+/* ===================== קבועים ===================== */
+const COLS = ['ingredients', 'dishes', 'recurring', 'channels', 'expenses', 'income', 'suppliers', 'invoices'];
+const LISTS = {
+  ingCats: ['קפה', 'חלב ותחליפי חלב', 'סירופים ורטבים', 'מאפים ומוצרים מוכנים', 'מרכיבי מזון', 'משקאות מוכנים (בקבוקים/פחיות)', 'חד-פעמי ואריזות', 'ניקיון וחומרים מתכלים', 'אחר'],
+  dishCats: ['קפה חם', 'קפה קר', 'שתייה חמה אחרת', 'שתייה קרה', 'מאפים', 'אוכל', 'תוספות', 'אחר'],
+  fixedCats: ['מקום / שכירות / דמי הצבה', 'ביטוחים', 'רישיונות ואגרות', 'ליסינג / הלוואות / החזר ציוד', 'שכר עובדים', 'הנהלת חשבונות ורו"ח', 'תוכנות, קופה ומנויים', 'תקשורת וטלפון', 'עמלות בנק', 'אחר'],
+  varCats: ['דלק / גז / גנרטור', 'חשמל', 'מים', 'תיקונים ותחזוקה', 'שיווק ופרסום', 'עמלות סליקה', 'ניקיון', 'הובלות ומשלוחים', 'ציוד קטן', 'אחר'],
+  incomeCats: ['מכירה בעגלה – אשראי', 'מכירה בעגלה – מזומן', 'מכירה בעגלה – ביט / פייבוקס', 'אירועים וקייטרינג', 'הזמנות מראש / טייק אוואי', 'אפליקציות משלוחים', 'אחר'],
+  methods: ['העברה בנקאית', 'כרטיס אשראי', 'הוראת קבע', 'מזומן', "צ'ק", 'ביט / פייבוקס'],
+};
+const DEF = {
+  vat: 18, businessType: 'murshe', fcGood: 30, fcWarn: 38, targetFc: 28, monthlyUnits: 0, workDays: 24,
+  autoLedger: true, accountantName: '', accountantEmail: '', ownerName: '', ...LISTS,
+};
+const UNITS = { g: 'גרם', ml: 'מ"ל', unit: 'יחידה', kg: 'ק"ג', l: 'ליטר' };
+const BASE = { kg: ['g', 1000], g: ['g', 1], l: ['ml', 1000], ml: ['ml', 1], unit: ['unit', 1] };
+const FREQ = { monthly: ['חודשי', 1], bimonthly: ['דו-חודשי', 2], quarterly: ['רבעוני', 3], semiannual: ['חצי-שנתי', 6], yearly: ['שנתי', 12] };
+const TERMS = { immediate: ['מיידי', null], net0: ['שוטף', 0], net30: ['שוטף+30', 30], net45: ['שוטף+45', 45], net60: ['שוטף+60', 60], net90: ['שוטף+90', 90] };
+const INV_STATUS = { unpaid: 'לא שולם', paid: 'שולם', partial: 'שולם חלקית', disputed: 'במחלוקת' };
+const ME_CLASS = {
+  star: ['כוכב', 'good', 'פופולרית ורווחית. לשמור, לא לגעת במחיר ולהציב במקום בולט.'],
+  horse: ['סוס עבודה', 'warn', 'נמכרת הרבה אבל מרוויחה פחות. לבדוק ייעול מנה או העלאה קטנה במחיר.'],
+  puzzle: ['חידה', 'acc', 'רווחית אבל לא נמכרת מספיק. לקדם: המלצה של הבריסטה, מיקום בתפריט, מבצע.'],
+  dog: ['שקול להוציא', 'bad', 'מעט מכירות ורווח נמוך. מועמדת להוצאה מהתפריט או לשינוי מתכון.'],
+};
+const ROUTES = [
+  ['overview', 'סקירה'], ['dishes', 'עלות מנות'], ['optimize', 'ייעול מנה'], ['ingredients', 'חומרי גלם'],
+  ['expenses', 'הוצאות'], ['income', 'הכנסות'], ['budget', 'קבועות ושוטפות'], ['invoices', 'חשבוניות ספקים'],
+  ['suppliers', 'ספקים'], ['data', 'נתונים והגדרות'],
+];
+
+/* ===================== מצב ===================== */
+const S = { settings: { ...DEF } };
+COLS.forEach(c => (S[c] = []));
+let mode = 'loading', db = null, assets = null, sampleCap = null, downloads = null, readonly = false;
+const loaded = new Set();
+let route = 'overview';
+let month = ymNow();
+const ui = { dishId: null, dishSort: 'margin', optId: null, sim: null, invFilter: 'open', invForm: false, imp: null, claude: '', claudeBusy: false, expCat: '', incCat: '', confirm: null };
+
+/* ===================== עזרים ===================== */
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = v => { const n = typeof v === 'number' ? v : parseFloat(String(v ?? '').replace(/[^\d.\-]/g, '')); return isFinite(n) ? n : 0; };
+const nf2 = new Intl.NumberFormat('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const nf0 = new Intl.NumberFormat('he-IL', { maximumFractionDigits: 0 });
+const ils = (n, d) => { const v = num(n); const dd = d ?? (Math.abs(v) < 100 ? 2 : 0); return (v < 0 ? '-' : '') + '₪' + (dd ? nf2 : nf0).format(Math.abs(v)); };
+const pct = (n, d = 1) => (n == null || !isFinite(n) ? '—' : n.toFixed(d) + '%');
+function ymNow() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+function today() { const d = new Date(); return ymd(d); }
+function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function parseD(s) { if (!s) return null; const [y, m, d] = String(s).split('-').map(Number); return y ? new Date(y, (m || 1) - 1, d || 1) : null; }
+function fmtD(s) { const d = parseD(s); return d ? d.toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric', year: '2-digit' }) : ''; }
+function monthName(ym) { const d = parseD(ym + '-01'); return d ? d.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' }) : ym; }
+function shiftMonth(ym, k) { const d = parseD(ym + '-01'); d.setMonth(d.getMonth() + k); return ymd(d).slice(0, 7); }
+function newId(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+const byId = col => Object.fromEntries(S[col].map(x => [x.id, x]));
+const opts = (list, cur, blank) => (blank ? `<option value="">${esc(blank)}</option>` : '') + [...new Set([...(list || []), ...(cur && !(list || []).includes(cur) ? [cur] : [])])].map(v => `<option ${v === cur ? 'selected' : ''}>${esc(v)}</option>`).join('');
+const kvOpts = (obj, cur) => Object.entries(obj).map(([k, v]) => `<option value="${k}" ${k === cur ? 'selected' : ''}>${esc(Array.isArray(v) ? v[0] : v)}</option>`).join('');
+const dis = () => (readonly ? 'disabled' : '');
+function toast(msg) { const t = $('#toast'); t.firstElementChild.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 2600); }
+
+/* ===================== אחסון ===================== */
+const LS = 'melody-finance-v1';
+function loadLocal() {
+  let data = null;
+  try { data = JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { }
+  if (!data && typeof buildSample === 'function') data = buildSample();
+  if (data) { COLS.forEach(c => (S[c] = data[c] || [])); S.settings = { ...DEF, ...(data.settings || {}) }; }
+}
+function saveLocal() { try { const o = { settings: S.settings }; COLS.forEach(c => (o[c] = S[c])); localStorage.setItem(LS, JSON.stringify(o)); } catch (e) { } }
+const chains = {};
+function serial(key, fn) { const p = (chains[key] || Promise.resolve()).then(fn, fn); chains[key] = p.catch(() => { }); return p; }
+function clean(o) { const r = {}; for (const k in o) if (k !== 'id' && o[k] !== undefined) r[k] = o[k]; return r; }
+async function put(col, obj) {
+  if (!obj.id) obj.id = newId(col[0]);
+  if (mode === 'db') {
+    const body = clean(obj);
+    try { await serial(col + '/' + obj.id, () => db.collection(col).doc(obj.id).set(body)); }
+    catch (e) { onWriteErr(e); }
+  } else {
+    const i = S[col].findIndex(x => x.id === obj.id);
+    if (i >= 0) S[col][i] = { ...obj }; else S[col].push({ ...obj });
+    saveLocal(); scheduleRender();
+  }
+  return obj.id;
+}
+function patch(col, id, part) { const cur = S[col].find(x => x.id === id); if (!cur) return; return put(col, { ...cur, ...part, sample: false }); }
+async function del(col, id) {
+  if (mode === 'db') { try { await serial(col + '/' + id, () => db.collection(col).doc(id).delete()); } catch (e) { onWriteErr(e); } }
+  else { S[col] = S[col].filter(x => x.id !== id); saveLocal(); scheduleRender(); }
+}
+async function saveSettings(part) {
+  S.settings = { ...S.settings, ...part };
+  if (mode === 'db') { const body = {}; for (const k in S.settings) if (JSON.stringify(S.settings[k]) !== JSON.stringify(DEF[k])) body[k] = S.settings[k]; try { await serial('settings', () => db.doc('settings/main').set(body)); } catch (e) { onWriteErr(e); } }
+  else saveLocal();
+  scheduleRender();
+}
+async function bulk(tasks) { for (let i = 0; i < tasks.length; i += 6) await Promise.all(tasks.slice(i, i + 6).map(f => f())); }
+function onWriteErr(e) {
+  if (e && e.code === 'invalid_argument') { readonly = true; toast('אין לך הרשאת עריכה – המערכת במצב צפייה'); scheduleRender(); }
+  else if (e && e.code === 'quota_exceeded') toast('נגמר המקום לשמירת נתונים. מחק נתונים ישנים ונסה שוב.');
+  else toast('השמירה נכשלה. נסה שוב בעוד רגע.');
+}
+let rq = 0;
+function scheduleRender() { if (rq) return; rq = requestAnimationFrame(() => { rq = 0; render(); }); }
+
+async function boot() {
+  $('#monthSel').value = month;
+  window.addEventListener('hashchange', () => { route = routeFromHash(); render(); window.scrollTo(0, 0); });
+  route = routeFromHash();
+  const cl = window.claude;
+  if (!cl || !cl.use) { mode = 'local'; loadLocal(); render(); return; }
+  render();
+  try { db = await cl.use('db'); } catch (e) { db = null; }
+  if (!db) { mode = 'local'; loadLocal(); render(); return; }
+  mode = 'db';
+  const timer = setTimeout(() => { if (loaded.size < COLS.length) { ui.slow = true; scheduleRender(); } }, 10000);
+  COLS.forEach(c => db.collection(c).onSnapshot(snap => {
+    S[c] = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+    if (!snap.metadata.fromCache) loaded.add(c);
+    if (loaded.size === COLS.length) { clearTimeout(timer); ui.slow = false; }
+    scheduleRender();
+  }, err => { loaded.add(c); toast('לא הצלחתי לטעון חלק מהנתונים'); scheduleRender(); }));
+  db.doc('settings/main').onSnapshot(s => { S.settings = { ...DEF, ...(s.exists ? s.data() : {}) }; scheduleRender(); }, () => { });
+  cl.use('user').then(async u => { if (!u) return; const c = await u.can('data.write'); if (c === false) { readonly = true; scheduleRender(); } }).catch(() => { });
+  cl.use('assets').then(a => { assets = a; scheduleRender(); }).catch(() => { });
+  cl.use('sample').then(a => { sampleCap = a; scheduleRender(); }).catch(() => { });
+  cl.use('downloads').then(a => { downloads = a; }).catch(() => { });
+}
+function routeFromHash() { const h = location.hash.slice(1); return ROUTES.some(r => r[0] === h) ? h : 'overview'; }
+
+/* ===================== חישובים ===================== */
+const vatF = () => 1 + num(S.settings.vat) / 100;
+const isMurshe = () => S.settings.businessType !== 'patur';
+const net = gross => (isMurshe() ? num(gross) / vatF() : num(gross));
+function baseOf(ing) { return BASE[ing.packUnit] || BASE.unit; }
+function baseUnitLabel(ing) { return UNITS[baseOf(ing)[0]]; }
+function unitCost(ing) { // עלות ליחידת בסיס (גרם / מ"ל / יחידה) כולל פחת, ללא מע"מ אם עוסק מורשה
+  const q = num(ing.packQty) * baseOf(ing)[1]; if (!q) return 0;
+  const w = Math.min(num(ing.waste), 90) / 100;
+  return net(ing.packPrice) / q / (1 - w);
+}
+function prettyUnitCost(ing) {
+  const b = baseOf(ing)[0], c = unitCost(ing);
+  if (b === 'g') return ils(c * 1000) + ' לק"ג';
+  if (b === 'ml') return ils(c * 1000) + ' לליטר';
+  return ils(c, 2) + ' ליחידה';
+}
+function recMonthly(r) { return num(r.amount) / (FREQ[r.freq] || FREQ.monthly)[1]; }
+function overheadMonthly() { return S.recurring.reduce((a, r) => a + net(recMonthly(r)), 0); }
+function totalUnits() { return num(S.settings.monthlyUnits) || S.dishes.reduce((a, d) => a + num(d.monthlySales), 0); }
+function overheadPerUnit() { const u = totalUnits(); return u ? overheadMonthly() / u : 0; }
+function lineCost(line, ings) { const ing = ings[line.ingId]; return ing ? num(line.qty) * unitCost(ing) : 0; }
+function calc(d, items, price) {
+  const ings = byId('ingredients');
+  items = items || d.items || []; price = price ?? d.price;
+  const lines = items.map(l => ({ ...l, ing: ings[l.ingId], cost: lineCost(l, ings) }));
+  const direct = lines.reduce((a, l) => a + l.cost, 0);
+  const priceNet = net(price);
+  const overhead = overheadPerUnit();
+  const full = direct + overhead;
+  const gross = priceNet - direct, profit = priceNet - full;
+  const fc = priceNet ? (direct / priceNet) * 100 : null;
+  const gm = priceNet ? (gross / priceNet) * 100 : null;
+  const margin = priceNet ? (profit / priceNet) * 100 : null;
+  const s = S.settings;
+  let status = 'none';
+  if (priceNet && direct) status = profit < 0 || fc > num(s.fcWarn) ? 'bad' : fc > num(s.fcGood) ? 'warn' : 'good';
+  const tf = Math.max(5, num(s.targetFc)) / 100;
+  const recPrice = direct ? Math.ceil(((direct / tf) * (isMurshe() ? vatF() : 1)) * 2) / 2 : 0;
+  const sales = num(d.monthlySales);
+  return { lines, direct, priceNet, overhead, full, gross, profit, fc, gm, margin, status, recPrice, sales, monthlyGross: gross * sales, monthlyProfit: profit * sales };
+}
+function menuEngineering() {
+  const rows = S.dishes.map(d => ({ d, c: calc(d) })).filter(r => r.c.sales > 0 && r.c.priceNet > 0);
+  const out = {};
+  if (rows.length < 2) return out;
+  const totalSales = rows.reduce((a, r) => a + r.c.sales, 0);
+  const popTh = (totalSales / rows.length) * 0.7;
+  const avgGross = rows.reduce((a, r) => a + r.c.gross * r.c.sales, 0) / totalSales;
+  rows.forEach(r => { const hp = r.c.sales >= popTh, hm = r.c.gross >= avgGross; out[r.d.id] = hp && hm ? 'star' : hp ? 'horse' : hm ? 'puzzle' : 'dog'; });
+  return out;
+}
+const STATUS_TXT = { good: 'רווחית', warn: 'גבולית', bad: 'בעייתית', none: 'חסר מידע' };
+const statusChip = st => `<span class="chip ${st === 'none' ? '' : st}"><i></i>${STATUS_TXT[st]}</span>`;
+function dueDate(inv) {
+  const d = parseD(inv.date); if (!d) return null;
+  const t = TERMS[inv.terms] || TERMS.immediate;
+  if (t[1] == null) return d;
+  const e = new Date(d.getFullYear(), d.getMonth() + 1, 0); e.setDate(e.getDate() + t[1]); return e;
+}
+function invState(inv) {
+  if (inv.status === 'paid') return ['paid', 'שולם', 'good'];
+  if (inv.status === 'disputed') return ['disputed', 'במחלוקת', 'acc'];
+  const due = dueDate(inv); if (!due) return ['open', 'פתוח', ''];
+  const days = Math.round((due - parseD(today())) / 864e5);
+  const pre = inv.status === 'partial' ? 'שולם חלקית · ' : '';
+  if (days < 0) return ['late', pre + `באיחור ${-days} ימים`, 'bad'];
+  if (days <= 7) return ['soon', pre + (days === 0 ? 'לתשלום היום' : `לתשלום בעוד ${days} ימים`), 'warn'];
+  return ['open', pre + `בעוד ${days} ימים`, ''];
+}
+const inMonth = (rows, ym) => rows.filter(r => String(r.date || '').startsWith(ym));
+const sum = (rows, f = 'amount') => rows.reduce((a, r) => a + num(r[f]), 0);
+function groupSum(rows, key) { const m = {}; rows.forEach(r => { const k = r[key] || 'ללא קטגוריה'; m[k] = (m[k] || 0) + num(r.amount); }); return Object.entries(m).sort((a, b) => b[1] - a[1]); }
+function monthTotals(ym) {
+  const inc = inMonth(S.income, ym), exp = inMonth(S.expenses, ym);
+  if (inc.length || exp.length) return { income: sum(inc), expenses: sum(exp), src: 'ledger' };
+  return { income: 0, expenses: 0, src: 'none' };
+}
+const hasSample = () => COLS.some(c => S[c].some(x => x.sample));
+
+/* ===================== רינדור ===================== */
+function render() {
+  const a = document.activeElement, fid = a && a.id, sel = a && a.selectionStart != null ? [a.selectionStart, a.selectionEnd] : null;
+  $('#tabs').innerHTML = ROUTES.map(([k, l]) => `<a href="#${k}" ${k === route ? 'aria-current="page"' : ''}>${l}</a>`).join('');
+  const app = $('#app');
+  if (mode === 'loading') { app.innerHTML = '<div class="empty">טוען נתונים…</div>'; return; }
+  let html = '';
+  if (ui.slow) html += `<div class="banner"><b>הנתונים עוד לא נטענו במלואם.</b> ייתכן שמה שמוצג לא מעודכן.</div>`;
+  if (readonly) html += `<div class="banner"><b>מצב צפייה.</b> אפשר לראות הכול, אבל רק בעל העסק או עורך יכול לשנות נתונים.</div>`;
+  if (hasSample()) html += `<div class="banner"><span style="flex:1 1 200px"><b>נתוני דוגמה</b> להמחשה בלבד, עד שיגיעו הנתונים של בעל העסק.</span>${route !== 'data' ? '<a class="btn" href="#data">ייבוא מאקסל</a>' : ''}</div>`;
+  if (mode === 'local') html += `<div class="banner" style="border-color:var(--line);background:var(--sunk)"><span class="muted">קובץ מקומי: הנתונים נשמרים רק בדפדפן הזה.</span></div>`;
+  html += (PAGES[route] || PAGES.overview)();
+  app.innerHTML = html;
+  if (fid) { const el = document.getElementById(fid); if (el) { el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { } } }
+}
+
+const PAGES = {};
+
+/* ---------- נושא פתוח: תיעוד מכירות ---------- */
+const SALES_OPTIONS = [
+  ['קופה עם כפתור לכל מנה, מחוברת למסופון', 'במקום להקליד סכום במסופון לוחצים על המנה, והסכום עובר למסופון לבד. זו לא פעולה נוספת לעובד, וכל מכירה מתועדת לפי מנה, גם במזומן ובביט. מוציאה קבלות אוטומטית. החיסרון: מנוי חודשי ויום-יומיים של הסתגלות.', 'מדויק'],
+  ['הזמנה עצמית של לקוחות בקוד QR', 'הלקוח מזמין ומשלם בטלפון ואוסף בלי תור. בזמן עומס זה מוריד עבודה מהעובדים, וכל הזמנה מתועדת במלואה. משתלב עם מודול ההזמנות מראש שמתוכנן. גם אם רק חלק מהלקוחות ישתמשו, זה מדגם טוב לתמהיל.', 'מדויק לחלק מהמכירות'],
+  ['ימי מדגם', '2–3 ימים בחודש בעל העסק מקיש בטלפון כל מנה שנמכרת. שאר החודש מוערך לפי התמהיל של ימי המדגם.', 'הערכה טובה'],
+  ['ניתוח קובץ העסקאות מהמסופון', 'בקובץ יש רק סכום ושעה, בלי פירוט. מחיובים של פריט אחד אפשר לזהות את המנה לפי המחיר, ולהעריך מזה את התמהיל. בלי עבודה נוספת, אבל לא עובד כששתי מנות באותו מחיר, ולא כולל מזומן וביט.', 'הערכה'],
+  ['הערכה לפי קניות', 'על פני חודש, מה שנקנה (כוסות לפי גודל, לחמניות, מאפים) קרוב למה שנמכר. לא מדויק, כי חלק מהקניות נעשות בסופר בלי חשבונית ויש מלאי ופחת.', 'הערכה גסה'],
+  ['ספירת מלאי שבועית', 'פעם בשבוע סופרים את המוצרים העיקריים: מלאי בתחילה + קניות − מלאי בסוף = מה שנוצל. נותן עלות מזון אמיתית ומראה פחת, אבל דורש לרשום גם את הקניות בסופר.', 'בקרה, לא תמהיל'],
+];
+function salesIssue(compact) {
+  if (compact) return `<div class="banner" style="border-color:var(--accent);background:var(--accent-soft)"><span style="flex:1 1 220px"><b style="color:var(--accent)">נושא פתוח:</b> כרגע אין דרך מוגדרת לתעד מה נמכר ומה נקנה. המספרים כאן הם הערכות של בעל העסק.</span><a class="btn" href="#overview" data-act="showIssue">האפשרויות</a></div>`;
+  return `<section class="panel" id="salesIssue" style="border-color:var(--accent)">
+    <h3>נושא פתוח לבעל העסק: איך מתעדים מכירות וקניות</h3>
+    <p style="margin:0 0 10px;max-width:72ch">היום המכירות מתועדות רק כחיובים במסופון האשראי, בלי פירוט של מה נמכר, ומזומן וביט לא נרשמים בכלל. גם חלק מהקניות (השלמות בסופר) נעשות בלי חשבונית. לכן מספר המנות שנמכרות בחודש, וכל מה שנגזר ממנו (נקודת איזון, רווח חודשי לכל מנה, סיווג המנות), מבוסס כרגע על הערכה. עלות כל מנה לפי המתכון לא תלויה בזה והיא מדויקת.</p>
+    <p style="margin:0 0 6px"><b>האפשרויות. אפשר לבחור אחת או לשלב:</b></p>
+    <ul style="margin:0;padding-inline-start:20px;display:grid;gap:8px;max-width:80ch">${SALES_OPTIONS.map(([t, d, a]) => `<li><b>${esc(t)}</b> <span class="chip">${esc(a)}</span><br><span class="muted">${esc(d)}</span></li>`).join('')}</ul>
+    <p style="margin:12px 0 0;max-width:72ch"><b>קניות בסופר:</b> כדאי לצלם כל קבלה ולהעלות אותה כהוצאה. זה גם מוכר מול רואת החשבון, וכסף שהולך לאיבוד כשהקבלות נעלמות.</p>
+    <p class="muted" style="margin:6px 0 0;font-size:.88rem">חשוב: כל שיטה צריכה להתאים לעבודה בעגלה. אסור שהיא תוסיף לעובדים הקלדה בזמן עומס.</p>
+  </section>`;
+}
+
+/* ---------- סקירה ---------- */
+PAGES.overview = () => {
+  const t = monthTotals(month), prev = monthTotals(shiftMonth(month, -1));
+  const profit = t.income - t.expenses;
+  const open = S.invoices.filter(i => i.status !== 'paid');
+  const late = open.filter(i => invState(i)[0] === 'late');
+  const months = Array.from({ length: 6 }, (_, i) => shiftMonth(month, i - 5)).map(m => ({ m, ...monthTotals(m) }));
+  const max = Math.max(1, ...months.flatMap(x => [x.income, x.expenses]));
+  const expG = groupSum(inMonth(S.expenses, month), 'category');
+  const incG = groupSum(inMonth(S.income, month), 'category');
+  const dishes = S.dishes.map(d => ({ d, c: calc(d) })).filter(r => r.c.priceNet && r.c.direct).sort((a, b) => b.c.margin - a.c.margin);
+  const ohm = overheadMonthly();
+  const totalSales = dishes.reduce((a, r) => a + r.c.sales, 0);
+  const avgGross = totalSales ? dishes.reduce((a, r) => a + r.c.gross * r.c.sales, 0) / totalSales : (dishes.length ? dishes.reduce((a, r) => a + r.c.gross, 0) / dishes.length : 0);
+  const be = avgGross > 0 ? Math.ceil(ohm / avgGross) : 0;
+  const delta = (a, b) => (b ? `<span class="${a >= b ? 'pos' : 'neg'}">${a >= b ? '▲' : '▼'} ${pct(Math.abs((a - b) / b) * 100, 0)}</span> מול חודש קודם` : '');
+  const bars = (rows, cls, total) => rows.length ? `<div class="bars">${rows.map(([k, v]) => `<div class="bar ${cls}"><span>${esc(k)}</span><div class="t"><span style="width:${(v / rows[0][1]) * 100}%"></span></div><span class="num">${ils(v)} <small class="muted">${pct((v / total) * 100, 0)}</small></span></div>`).join('')}</div>` : `<p class="empty">אין רשומות בחודש הזה.</p>`;
+  return `
+  <div class="head"><div><h2>סקירה · ${esc(monthName(month))}</h2><p class="lead">התמונה הכללית של העגלה: כמה נכנס, כמה יצא, ומה מצב החשבוניות.</p></div></div>
+  ${salesIssue()}
+  <div class="kpis">
+    <div class="kpi"><div class="l">הכנסות</div><div class="v num">${ils(t.income)}</div><div class="s">${delta(t.income, prev.income)}</div></div>
+    <div class="kpi"><div class="l">הוצאות</div><div class="v num">${ils(t.expenses)}</div><div class="s">${delta(t.expenses, prev.expenses)}</div></div>
+    <div class="kpi"><div class="l">רווח תפעולי</div><div class="v num ${profit < 0 ? 'neg' : ''}">${ils(profit)}</div><div class="s">${t.income ? pct((profit / t.income) * 100) + ' מההכנסות' : '&nbsp;'}</div></div>
+    <div class="kpi"><div class="l">חשבוניות פתוחות</div><div class="v num">${ils(sum(open))}</div><div class="s">${late.length ? `<span class="neg">${late.length} באיחור · ${ils(sum(late))}</span>` : `${open.length} חשבוניות, אין איחורים`}</div></div>
+  </div>
+  <div class="grid g2">
+    <section class="panel"><h3>הכנסות מול הוצאות – חצי שנה</h3>
+      <div class="legend"><span style="--c:var(--accent)">הכנסות</span><span style="--c:var(--crema)">הוצאות</span></div>
+      <div class="cols">${months.map(x => `<div class="m" title="${esc(monthName(x.m))}: הכנסות ${ils(x.income)}, הוצאות ${ils(x.expenses)}"><div class="pair"><span class="inc" style="height:${(x.income / max) * 100}%"></span><span class="exp" style="height:${(x.expenses / max) * 100}%"></span></div></div>`).join('')}</div>
+      <div class="cols-l">${months.map(x => `<div>${esc(parseD(x.m + '-01').toLocaleDateString('he-IL', { month: 'short' }))}</div>`).join('')}</div>
+    </section>
+    <section class="panel"><h3>נקודת איזון חודשית</h3>
+      <dl class="stat">
+        <dt>הוצאות קבועות ושוטפות בחודש${isMurshe() ? ' (ללא מע"מ)' : ''}</dt><dd>${ils(ohm)}</dd>
+        <dt>רווח גולמי ממוצע למנה</dt><dd>${ils(avgGross, 2)}</dd>
+        <dt>מנות לחודש כדי לכסות הוצאות</dt><dd class="big">${be ? nf0.format(be) : '—'}</dd>
+        <dt>בממוצע ליום פעילות (${num(S.settings.workDays) || 24} ימים)</dt><dd>${be ? nf0.format(Math.ceil(be / (num(S.settings.workDays) || 24))) + ' מנות' : '—'}</dd>
+        <dt>מכירות משוערות בחודש</dt><dd>${nf0.format(totalSales)} מנות</dd>
+      </dl>
+      <p class="muted" style="margin:10px 0 0;font-size:.88rem">${be && totalSales ? (totalSales >= be ? `העגלה מעל נקודת האיזון ב-${nf0.format(totalSales - be)} מנות בחודש.` : `<span class="neg">חסרות ${nf0.format(be - totalSales)} מנות בחודש כדי לכסות את ההוצאות.</span>`) : 'ממלאים מנות ומכירות משוערות כדי לחשב.'}</p>
+    </section>
+    <section class="panel"><h3>לאן הולך הכסף</h3>${bars(expG, 'exp', t.expenses || 1)}</section>
+    <section class="panel"><h3>מאיפה נכנס הכסף</h3>${bars(incG, '', t.income || 1)}</section>
+    <section class="panel"><h3>המנות הכי רווחיות</h3>${miniDishes(dishes.slice(0, 3))}</section>
+    <section class="panel"><h3>המנות הכי פחות רווחיות</h3>${miniDishes(dishes.slice(-3).reverse())}<p style="margin:10px 0 0"><a class="btn" href="#optimize">לייעול מנה</a></p></section>
+  </div>`;
+};
+function miniDishes(rows) {
+  if (!rows.length) return '<p class="empty">עוד אין מנות עם מחיר ומתכון.</p>';
+  return `<div class="tbl"><table><thead><tr><th>מנה</th><th>רווח למנה</th><th>% רווח</th><th></th></tr></thead><tbody>${rows.map(({ d, c }) => `<tr><td>${esc(d.name)}</td><td class="num">${ils(c.profit, 2)}</td><td class="num">${pct(c.margin)}</td><td>${statusChip(c.status)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+/* ---------- עלות מנות ---------- */
+PAGES.dishes = () => {
+  const me = menuEngineering();
+  let rows = S.dishes.map(d => ({ d, c: calc(d) }));
+  const k = ui.dishSort;
+  const key = { margin: r => r.c.margin ?? -1e9, profit: r => r.c.profit, monthly: r => r.c.monthlyProfit, fc: r => -(r.c.fc ?? 1e9), name: r => r.d.name };
+  rows.sort((a, b) => k === 'name' ? String(a.d.name).localeCompare(b.d.name, 'he') : key[k](b) - key[k](a));
+  const sel = S.dishes.find(d => d.id === ui.dishId);
+  return `
+  <div class="head"><div><h2>עלות מנות ורווחיות</h2><p class="lead">כל מנה מחושבת לפי המרכיבים שלה. עלות מלאה כוללת גם חלק יחסי מההוצאות הקבועות והשוטפות (${ils(overheadPerUnit(), 2)} למנה). כל שינוי במחיר של חומר גלם מעדכן כאן מיד.</p></div>
+    <div class="row"><label class="field" for="dishSort">מיון<select id="dishSort">${kvOpts({ margin: '% רווח', profit: 'רווח למנה', monthly: 'רווח חודשי', fc: 'עלות מזון נמוכה', name: 'שם' }, k)}</select></label>
+    <button class="btn pri" data-act="addDish" ${dis()}>+ מנה חדשה</button></div></div>
+  ${salesIssue(true)}
+  ${sel ? dishEditor(sel, me) : ''}
+  <div class="tbl"><table>
+    <thead><tr><th>מנה</th><th>קטגוריה</th><th>מחיר ללקוח</th><th>עלות חומרים</th><th>עלות מלאה</th><th>רווח למנה</th><th>עלות מזון</th><th>% רווח</th><th>מכירות/חודש (הערכה)</th><th>רווח חודשי</th><th>סיווג</th><th>מצב</th></tr></thead>
+    <tbody>${rows.map(({ d, c }) => `<tr class="click ${d.id === ui.dishId ? 'sel' : ''}" data-act="openDish" data-id="${d.id}">
+      <td><b>${esc(d.name) || '<span class="muted">ללא שם</span>'}</b></td><td class="muted">${esc(d.category)}</td>
+      <td class="num">${ils(d.price, 2)}</td><td class="num">${ils(c.direct, 2)}</td><td class="num">${ils(c.full, 2)}</td>
+      <td class="num ${c.profit < 0 ? 'neg' : ''}">${ils(c.profit, 2)}</td><td class="num">${pct(c.fc)}</td><td class="num"><b>${pct(c.margin)}</b></td>
+      <td class="num">${nf0.format(c.sales)}</td><td class="num">${ils(c.monthlyProfit)}</td>
+      <td>${me[d.id] ? `<span class="chip ${ME_CLASS[me[d.id]][1]}" title="${esc(ME_CLASS[me[d.id]][2])}">${ME_CLASS[me[d.id]][0]}</span>` : ''}</td><td>${statusChip(c.status)}</td></tr>`).join('') || `<tr><td colspan="12" class="empty">עוד אין מנות. לחץ "מנה חדשה" כדי להתחיל.</td></tr>`}</tbody>
+  </table></div>
+  <section class="panel"><h3>איך לקרוא את הטבלה</h3>
+    <p class="muted" style="margin:0 0 8px">עלות מזון (Food cost) = עלות חומרי הגלם חלקי מחיר המכירה${isMurshe() ? ' ללא מע"מ' : ''}. ירוק עד ${S.settings.fcGood}%, צהוב עד ${S.settings.fcWarn}%, אדום מעל או כשהמנה מפסידה אחרי העמסת הוצאות. % רווח מחושב אחרי העמסה.</p>
+    <div class="row">${Object.values(ME_CLASS).map(([n, c, t]) => `<span class="chip ${c}" title="${esc(t)}">${n}</span><small class="note" style="flex:1 1 220px">${esc(t)}</small>`).join('')}</div>
+  </section>`;
+};
+function dishEditor(d, me) {
+  const c = calc(d), ings = S.ingredients.slice().sort((a, b) => String(a.name).localeCompare(b.name, 'he'));
+  return `<section class="panel" id="dishEditor">
+    <div class="head"><h3 style="margin:0">${esc(d.name || 'מנה חדשה')}</h3><div class="row">
+      <a class="btn" href="#optimize" data-act="optDish" data-id="${d.id}">ייעול המנה</a>
+      <button class="btn" data-act="dupDish" data-id="${d.id}" ${dis()}>שכפול</button>
+      ${delBtn('dishes', d.id, 'מחיקת מנה')}
+      <button class="btn ghost" data-act="closeDish">סגירה ✕</button></div></div>
+    <div class="split" style="margin-top:12px">
+      <div class="grid" style="gap:12px">
+        <div class="form">
+          <label class="field" for="dn-${d.id}">שם המנה<input id="dn-${d.id}" data-col="dishes" data-id="${d.id}" data-f="name" value="${esc(d.name)}" ${dis()}></label>
+          <label class="field" for="dc-${d.id}">קטגוריה<select id="dc-${d.id}" data-col="dishes" data-id="${d.id}" data-f="category" ${dis()}>${opts(S.settings.dishCats, d.category, 'בחירה')}</select></label>
+          <label class="field" for="dp-${d.id}">מחיר ללקוח כולל מע"מ<input id="dp-${d.id}" type="number" step="0.5" inputmode="decimal" data-col="dishes" data-id="${d.id}" data-f="price" data-num value="${esc(d.price)}" ${dis()}></label>
+          <label class="field" for="ds-${d.id}">מכירות משוערות בחודש<input id="ds-${d.id}" type="number" inputmode="numeric" data-col="dishes" data-id="${d.id}" data-f="monthlySales" data-num value="${esc(d.monthlySales)}" ${dis()}></label>
+        </div>
+        <div class="tbl"><table><thead><tr><th>מרכיב</th><th>כמות</th><th>יחידה</th><th>עלות</th><th>חלק מהעלות</th><th></th></tr></thead><tbody>
+          ${c.lines.map((l, i) => `<tr>
+            <td><select id="dl-${d.id}-${i}" data-dish="${d.id}" data-i="${i}" data-f="ingId" ${dis()}><option value="">בחירת חומר גלם</option>${ings.map(g => `<option value="${g.id}" ${g.id === l.ingId ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select></td>
+            <td><input id="dq-${d.id}-${i}" class="w-num" type="number" step="any" inputmode="decimal" data-dish="${d.id}" data-i="${i}" data-f="qty" value="${esc(l.qty)}" ${dis()}></td>
+            <td class="muted">${l.ing ? baseUnitLabel(l.ing) : ''}</td><td class="num">${ils(l.cost, 2)}</td>
+            <td><div class="share" title="${pct(c.direct ? (l.cost / c.direct) * 100 : 0, 0)}"><span style="width:${c.direct ? (l.cost / c.direct) * 100 : 0}%"></span></div></td>
+            <td><button class="btn ghost" title="הסרת מרכיב" aria-label="הסרת מרכיב" data-act="rmLine" data-id="${d.id}" data-i="${i}" ${dis()}>✕</button></td></tr>`).join('') || `<tr><td colspan="6" class="empty">אין מרכיבים עדיין.</td></tr>`}
+        </tbody></table></div>
+        <div><button class="btn" data-act="addLine" data-id="${d.id}" ${dis()}>+ מרכיב</button> <small class="note">לא לשכוח כוס, מכסה, סוכר ובוחשן. הם חלק מעלות המנה.</small></div>
+      </div>
+      <div class="panel" style="background:var(--sunk);border:0">
+        <dl class="stat">
+          <dt>מחיר ללקוח</dt><dd>${ils(d.price, 2)}</dd>
+          ${isMurshe() ? `<dt>מחיר ללא מע"מ</dt><dd>${ils(c.priceNet, 2)}</dd>` : ''}
+          <dt>עלות חומרי גלם</dt><dd>${ils(c.direct, 2)}</dd>
+          <dt>העמסת הוצאות קבועות ושוטפות</dt><dd>${ils(c.overhead, 2)}</dd>
+          <dt>עלות מלאה</dt><dd>${ils(c.full, 2)}</dd>
+          <dt>רווח גולמי (לפני העמסה)</dt><dd>${ils(c.gross, 2)} · ${pct(c.gm)}</dd>
+          <dt><b>רווח נקי למנה</b></dt><dd class="big ${c.profit < 0 ? 'neg' : 'pos'}">${ils(c.profit, 2)} · ${pct(c.margin)}</dd>
+          <dt>עלות מזון</dt><dd>${pct(c.fc)} ${statusChip(c.status)}</dd>
+          <dt>רווח חודשי משוער</dt><dd>${ils(c.monthlyProfit)}</dd>
+          <dt>מחיר מומלץ ליעד עלות מזון ${S.settings.targetFc}%</dt><dd>${c.recPrice ? ils(c.recPrice, 2) : '—'}</dd>
+        </dl>
+        ${me[d.id] ? `<p style="margin:12px 0 0"><span class="chip ${ME_CLASS[me[d.id]][1]}">${ME_CLASS[me[d.id]][0]}</span> <small>${esc(ME_CLASS[me[d.id]][2])}</small></p>` : ''}
+      </div>
+    </div></section>`;
+}
+function delBtn(col, id, label) {
+  const armed = ui.confirm === col + ':' + id;
+  return `<button class="btn ${armed ? 'pri' : 'ghost'} danger" data-act="del" data-col="${col}" data-id="${id}" title="${label}" aria-label="${label}" ${dis()} ${armed ? 'style="background:var(--bad);border-color:var(--bad);color:#fff"' : ''}>${armed ? 'בטוח? למחוק' : '✕'}</button>`;
+}
+
+/* ---------- ייעול מנה ---------- */
+PAGES.optimize = () => {
+  const dishes = S.dishes.slice().sort((a, b) => (calc(a).margin ?? 1e9) - (calc(b).margin ?? 1e9));
+  if (!dishes.length) return `<h2>ייעול מנה</h2><p class="empty">צריך קודם להוסיף מנות.</p>`;
+  if (!ui.optId || !S.dishes.some(d => d.id === ui.optId)) ui.optId = dishes[0].id;
+  const d = S.dishes.find(x => x.id === ui.optId);
+  if (!ui.sim || ui.sim.id !== d.id) ui.sim = { id: d.id, items: JSON.parse(JSON.stringify(d.items || [])), price: d.price };
+  const cur = calc(d), sim = calc(d, ui.sim.items, ui.sim.price);
+  const sugg = suggestions(d, cur);
+  const ings = S.ingredients.slice().sort((a, b) => String(a.name).localeCompare(b.name, 'he'));
+  const diff = (a, b, f = v => ils(v, 2), better = 1) => { const dv = b - a; if (Math.abs(dv) < 0.005) return '<span class="muted">ללא שינוי</span>'; return `<span class="${dv * better > 0 ? 'pos' : 'neg'}">${dv > 0 ? '+' : ''}${f(dv)}</span>`; };
+  const changed = JSON.stringify(ui.sim.items) !== JSON.stringify(d.items || []) || num(ui.sim.price) !== num(d.price);
+  return `
+  <div class="head"><div><h2>ייעול מנה</h2><p class="lead">מנסים שינויים קטנים במתכון או במחיר ורואים מיד מה קורה לרווח, בלי לשנות את המנה עד שלוחצים "שמירה". ההצעות מבוססות על חומרי הגלם שכבר יש במערכת, וכל שינוי במנה צריך טעימה לפני שמכניסים לתפריט.</p></div>
+    <label class="field" for="optSel">מנה<select id="optSel">${dishes.map(x => { const c = calc(x); return `<option value="${x.id}" ${x.id === d.id ? 'selected' : ''}>${esc(x.name)} · ${pct(c.margin, 0)}</option>`; }).join('')}</select></label></div>
+  <div class="split">
+    <section class="panel"><h3>הצעות לשיפור</h3>
+      <div class="sugg"><ul>${sugg.map((s, i) => `<li><div style="flex:1 1 240px"><b>${esc(s.title)}</b><br><small class="muted">${esc(s.why)}</small></div><span class="gain">${s.gain > 0 ? '+' + ils(s.gain, 2) + ' למנה' : ''}</span>${s.apply ? `<button class="btn" data-act="applySugg" data-i="${i}">לנסות</button>` : ''}</li>`).join('') || '<li class="muted">לא נמצאו הצעות אוטומטיות. אפשר לשנות כמויות ידנית בסימולציה.</li>'}</ul></div>
+      ${sampleCap ? `<div style="margin-top:14px" class="grid" style="gap:8px"><div class="row"><button class="btn pri" data-act="askClaude" ${ui.claudeBusy ? 'disabled' : ''}>${ui.claudeBusy ? 'Claude חושב…' : 'לבקש רעיונות מ-Claude'}</button><small class="note">רעיונות לשיפור הרווח בלי לפגוע בטעם, על בסיס המתכון והעלויות.</small></div>${ui.claude ? `<div class="claude-out" id="claudeOut">${esc(ui.claude)}</div>` : ''}</div>` : ''}
+    </section>
+    <section class="panel"><h3>סימולציה</h3>
+      <div class="tbl"><table><thead><tr><th>מרכיב</th><th>כמות</th><th>עלות</th><th></th></tr></thead><tbody>
+      ${sim.lines.map((l, i) => { const orig = (d.items || [])[i]; const ch = !orig || orig.ingId !== l.ingId || num(orig.qty) !== num(l.qty); return `<tr ${ch ? 'class="sel"' : ''}>
+        <td><select id="sl-${i}" data-sim="${i}" data-f="ingId"><option value="">—</option>${ings.map(g => `<option value="${g.id}" ${g.id === l.ingId ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select></td>
+        <td><input id="sq-${i}" class="w-num" type="number" step="any" inputmode="decimal" data-sim="${i}" data-f="qty" value="${esc(l.qty)}"> <small class="muted">${l.ing ? baseUnitLabel(l.ing) : ''}</small></td>
+        <td class="num">${ils(l.cost, 2)}</td><td><button class="btn ghost" aria-label="הסרה" data-act="simRm" data-i="${i}">✕</button></td></tr>`; }).join('')}
+      </tbody></table></div>
+      <div class="row" style="margin-top:8px"><button class="btn" data-act="simAdd">+ מרכיב</button>
+        <label class="field" for="simPrice" style="grid-auto-flow:column;align-items:center">מחיר ללקוח<input id="simPrice" class="w-num" type="number" step="0.5" inputmode="decimal" data-simprice value="${esc(ui.sim.price)}" style="width:7em"></label></div>
+      <div class="tbl" style="margin-top:12px"><table><thead><tr><th></th><th>היום</th><th>אחרי שינוי</th><th>הפרש</th></tr></thead><tbody>
+        <tr><td>עלות חומרים</td><td class="num">${ils(cur.direct, 2)}</td><td class="num">${ils(sim.direct, 2)}</td><td class="num">${diff(cur.direct, sim.direct, v => ils(v, 2), -1)}</td></tr>
+        <tr><td>עלות מזון</td><td class="num">${pct(cur.fc)}</td><td class="num">${pct(sim.fc)}</td><td class="num">${diff(cur.fc ?? 0, sim.fc ?? 0, v => v.toFixed(1) + '%', -1)}</td></tr>
+        <tr><td>רווח נקי למנה</td><td class="num">${ils(cur.profit, 2)}</td><td class="num"><b>${ils(sim.profit, 2)}</b></td><td class="num">${diff(cur.profit, sim.profit)}</td></tr>
+        <tr><td>% רווח</td><td class="num">${pct(cur.margin)}</td><td class="num">${pct(sim.margin)}</td><td class="num">${diff(cur.margin ?? 0, sim.margin ?? 0, v => v.toFixed(1) + '%')}</td></tr>
+        <tr><td>רווח בחודש (${nf0.format(cur.sales)} מנות)</td><td class="num">${ils(cur.monthlyProfit)}</td><td class="num">${ils(sim.monthlyProfit)}</td><td class="num"><b>${diff(cur.monthlyProfit, sim.monthlyProfit, v => ils(v))}</b></td></tr>
+        <tr><td>בשנה</td><td></td><td></td><td class="num">${diff(cur.monthlyProfit * 12, sim.monthlyProfit * 12, v => ils(v))}</td></tr>
+      </tbody></table></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn pri" data-act="simSave" ${!changed || readonly ? 'disabled' : ''}>שמירה במנה</button>
+        <button class="btn" data-act="simSaveNew" ${!changed || readonly ? 'disabled' : ''}>שמירה כמנה חדשה</button>
+        <button class="btn ghost" data-act="simReset" ${!changed ? 'disabled' : ''}>איפוס</button>
+      </div>
+    </section>
+  </div>`;
+};
+function suggestions(d, cur) {
+  const out = [], ings = byId('ingredients'), items = d.items || [];
+  items.forEach((l, i) => {
+    const ing = ings[l.ingId]; if (!ing) return;
+    const base = baseOf(ing)[0];
+    if (ing.category === 'חד-פעמי ואריזות') return;
+    S.ingredients.filter(o => o.id !== ing.id && o.category === ing.category && baseOf(o)[0] === base && sameKind(o.name, ing.name) && unitCost(o) < unitCost(ing) - 1e-9)
+      .forEach(o => {
+        const gain = num(l.qty) * (unitCost(ing) - unitCost(o));
+        if (gain < 0.03) return;
+        const items2 = items.map((x, j) => (j === i ? { ...x, ingId: o.id } : x));
+        out.push({ title: `להחליף "${ing.name}" ב"${o.name}"`, why: `אותה קטגוריה (${ing.category}), זול יותר ב-${pct((1 - unitCost(o) / unitCost(ing)) * 100, 0)} ליחידה. לבדוק טעם ומרקם לפני שינוי קבוע.`, gain, apply: { items: items2 } });
+      });
+  });
+  const lines = cur.lines.filter(l => l.ing && l.ing.category !== 'חד-פעמי ואריזות').sort((a, b) => b.cost - a.cost);
+  if (lines[0] && cur.direct) {
+    const l = lines[0], share = l.cost / cur.direct, idx = items.findIndex(x => x.ingId === l.ingId);
+    if (share > 0.25 && num(l.qty) > 1) {
+      const newQ = Math.round(num(l.qty) * 0.9 * 10) / 10;
+      out.push({ title: `להקטין את "${l.ing.name}" ב-10% (${l.qty} ← ${newQ} ${baseUnitLabel(l.ing)})`, why: `המרכיב הזה הוא ${pct(share * 100, 0)} מעלות המנה. הפחתה קטנה בדרך כלל לא מורגשת, אבל חשוב לטעום.`, gain: l.cost * 0.1, apply: { items: items.map((x, j) => (j === idx ? { ...x, qty: newQ } : x)) } });
+    }
+  }
+  const waste = cur.lines.filter(l => l.ing && num(l.ing.waste) >= 8).sort((a, b) => b.cost - a.cost)[0];
+  if (waste) {
+    const w = num(waste.ing.waste) / 100, half = w / 2;
+    const gain = waste.cost - waste.cost * (1 - w) / (1 - half);
+    if (gain > 0.03) out.push({ title: `לצמצם פחת של "${waste.ing.name}" (${waste.ing.waste}%)`, why: 'למשל הזמנה בכמויות קטנות יותר, אחסון טוב יותר או מכירת עודפים בסוף היום. חצי מהפחת שווה את הסכום הזה.', gain, apply: null });
+  }
+  const pack = cur.lines.filter(l => l.ing && l.ing.category === 'חד-פעמי ואריזות').reduce((a, l) => a + l.cost, 0);
+  if (cur.direct && pack / cur.direct > 0.2) out.push({ title: 'אריזה יקרה ביחס למנה', why: `כוס, מכסה ושאר החד-פעמי הם ${pct((pack / cur.direct) * 100, 0)} מעלות המנה. כדאי לבקש הצעת מחיר מספק נוסף או לקנות בכמות גדולה יותר.`, gain: 0, apply: null });
+  if (cur.recPrice && num(d.price) < cur.recPrice - 0.25) {
+    const p = Math.min(cur.recPrice, Math.ceil(num(d.price) * 1.1 * 2) / 2);
+    out.push({ title: `להעלות מחיר ל-${ils(p, 2)}`, why: p < cur.recPrice ? `המחיר שמביא את עלות המזון ליעד של ${S.settings.targetFc}% הוא ${ils(cur.recPrice, 2)}. עלייה הדרגתית של עד 10% בדרך כלל עוברת בלי לאבד לקוחות.` : `זה המחיר שמביא את עלות המזון ליעד של ${S.settings.targetFc}%.`, gain: net(p) - net(d.price), apply: { price: p } });
+  }
+  else if (cur.status !== 'good' && num(d.price)) { const p = num(d.price) + 1; out.push({ title: `להעלות מחיר בשקל (ל-${ils(p, 2)})`, why: 'שינוי קטן שרוב הלקוחות לא מרגישים.', gain: net(p) - net(d.price), apply: { price: p } }); }
+  return out.sort((a, b) => b.gain - a.gain).slice(0, 8);
+}
+function sameKind(a, b) { const k = s => String(s).split(/[\s–\-,()]+/).filter(t => t && !/\d/.test(t)).slice(0, 2).join(' '); return k(a) === k(b); }
+async function askClaude() {
+  const d = S.dishes.find(x => x.id === ui.optId); if (!d || !sampleCap) return;
+  const c = calc(d);
+  const alts = S.ingredients.map(i => `${i.name} (${i.category}): ${prettyUnitCost(i)}`).join('\n');
+  const prompt = `אתה יועץ לבתי קפה קטנים. עגלת קפה בישראל רוצה לשפר את הרווחיות של מנה אחת בלי לפגוע באיכות ובחוויית הלקוח.
+מנה: ${d.name}. מחיר ללקוח ${num(d.price)} ש"ח כולל מע"מ. מכירות בחודש: ${c.sales}.
+מתכון ועלויות (ללא מע"מ):
+${c.lines.map(l => `- ${l.ing ? l.ing.name : '?'}: ${l.qty} ${l.ing ? baseUnitLabel(l.ing) : ''}, עלות ${l.cost.toFixed(2)} ש"ח`).join('\n')}
+עלות חומרים ${c.direct.toFixed(2)} ש"ח, עלות מזון ${c.fc?.toFixed(1)}%, רווח נקי למנה אחרי העמסת הוצאות ${c.profit.toFixed(2)} ש"ח.
+חומרי גלם זמינים במערכת:
+${alts}
+תן 3 עד 5 הצעות קונקרטיות ומעשיות בעברית: החלפת מרכיב, שינוי כמות, אריזה, תמחור או אפסייל. לכל הצעה: מה לעשות, כמה בערך חוסכים או מרוויחים למנה, ומה הסיכון לטעם או ללקוח. בלי הקדמות, רשימה ממוספרת קצרה, טקסט פשוט בלי Markdown.`;
+  ui.claudeBusy = true; ui.claude = ''; render();
+  try {
+    const r = await sampleCap(prompt, { onText: ({ text }) => { ui.claude = text; const o = $('#claudeOut'); if (o) o.textContent = text; else scheduleRender(); } });
+    ui.claude = r.text;
+  } catch (e) { ui.claude = e && e.code === 'not_granted' ? 'הגישה ל-Claude לא אושרה בעמוד הזה.' : 'לא הצלחתי לקבל תשובה כרגע. נסה שוב בעוד רגע.'; if (e && e.code === 'not_granted') sampleCap = null; }
+  ui.claudeBusy = false; render();
+}
+
+/* ---------- חומרי גלם ---------- */
+PAGES.ingredients = () => {
+  const use = {}; S.dishes.forEach(d => (d.items || []).forEach(l => (use[l.ingId] = (use[l.ingId] || 0) + 1)));
+  const rows = S.ingredients.slice().sort((a, b) => String(a.category).localeCompare(b.category, 'he') || String(a.name).localeCompare(b.name, 'he'));
+  const sup = S.suppliers.map(s => s.name);
+  return `
+  <div class="head"><div><h2>חומרי גלם, אריזות וחד-פעמי</h2><p class="lead">מחיר אריזה כולל מע"מ. המערכת מחשבת עלות לגרם, למ"ל או ליחידה${isMurshe() ? ' ללא מע"מ' : ''}, כולל פחת. שינוי מחיר כאן מעדכן את כל המנות.</p></div>
+  <button class="btn pri" data-act="add" data-col="ingredients" ${dis()}>+ חומר גלם</button></div>
+  <datalist id="supList">${sup.map(s => `<option value="${esc(s)}">`).join('')}</datalist>
+  <div class="tbl"><table><thead><tr><th>שם</th><th>קטגוריה</th><th>ספק</th><th>כמות באריזה</th><th>יחידה</th><th>מחיר אריזה</th><th>פחת %</th><th>עלות</th><th>במנות</th><th>מלאי מינימום</th><th></th></tr></thead><tbody>
+  ${rows.map(g => `<tr>
+    <td>${inp('ingredients', g, 'name', 'w-m')}</td>
+    <td>${sel('ingredients', g, 'category', S.settings.ingCats)}</td>
+    <td><input id="ingredients-${g.id}-supplier" class="w-s" list="supList" data-col="ingredients" data-id="${g.id}" data-f="supplier" value="${esc(g.supplier)}" ${dis()}></td>
+    <td>${inp('ingredients', g, 'packQty', 'w-num', 1)}</td>
+    <td><select id="ingredients-${g.id}-packUnit" data-col="ingredients" data-id="${g.id}" data-f="packUnit" ${dis()}>${kvOpts(UNITS, g.packUnit || 'unit')}</select></td>
+    <td>${inp('ingredients', g, 'packPrice', 'w-num', 1)}</td>
+    <td>${inp('ingredients', g, 'waste', 'w-num', 1)}</td>
+    <td class="num">${prettyUnitCost(g)}</td>
+    <td class="num muted">${use[g.id] || 0}</td>
+    <td>${inp('ingredients', g, 'minStock', 'w-num', 1)}</td>
+    <td>${delBtn('ingredients', g.id, 'מחיקה')}</td></tr>`).join('') || `<tr><td colspan="11" class="empty">אין חומרי גלם. אפשר להוסיף ידנית או לייבא מהאקסל.</td></tr>`}
+  </tbody></table></div>
+  <small class="note">"מלאי מינימום" (באריזות) נשמר כבר עכשיו עבור מודול המלאי וההתראות שיתווסף בהמשך.</small>`;
+};
+function inp(col, r, f, cls = '', isNum = 0, type) {
+  return `<input id="${col}-${r.id}-${f}" class="${cls}" ${isNum ? 'type="number" step="any" inputmode="decimal" data-num' : type ? `type="${type}"` : ''} data-col="${col}" data-id="${r.id}" data-f="${f}" value="${esc(r[f])}" ${dis()}>`;
+}
+function sel(col, r, f, list) { return `<select id="${col}-${r.id}-${f}" data-col="${col}" data-id="${r.id}" data-f="${f}" ${dis()}>${opts(list, r[f], 'בחירה')}</select>`; }
+
+/* ---------- הוצאות / הכנסות ---------- */
+function ledgerPage(kind) {
+  const isExp = kind === 'expenses', col = kind;
+  const cats = isExp ? expenseCats() : S.settings.incomeCats;
+  const fk = isExp ? 'expCat' : 'incCat';
+  const all = inMonth(S[col], month);
+  const rows = all.filter(r => !ui[fk] || r.category === ui[fk]).sort((a, b) => String(b.date).localeCompare(a.date));
+  const g = groupSum(all, 'category'), tot = sum(all), prevTot = sum(inMonth(S[col], shiftMonth(month, -1)));
+  const title = isExp ? 'הוצאות' : 'הכנסות';
+  return `
+  <div class="head"><div><h2>${title} · ${esc(monthName(month))}</h2><p class="lead">${isExp ? 'יומן הוצאות שוטף: כל תשלום בשורה. הקטגוריות זמניות ונדייק אותן לפי הנתונים של בעל העסק.' : 'הכנסות לפי ערוץ. אפשר לרשום יומי, שבועי או סיכום חודשי, מה שנוח.'}</p></div>
+  <button class="btn pri" data-act="add" data-col="${col}" ${dis()}>+ שורה</button></div>
+  <div class="kpis">
+    <div class="kpi"><div class="l">סה"כ ${title} בחודש</div><div class="v num">${ils(tot)}</div><div class="s">חודש קודם: ${ils(prevTot)}</div></div>
+    ${g.slice(0, 3).map(([k, v]) => `<div class="kpi"><div class="l">${esc(k)}</div><div class="v num">${ils(v)}</div><div class="s">${pct((v / (tot || 1)) * 100, 0)} מהסך</div></div>`).join('')}
+  </div>
+  ${salesIssue(true)}
+  ${isExp ? '' : channelsPanel()}
+  <section class="panel"><div class="head"><h3 style="margin:0">פירוט</h3><label class="field" for="${fk}" style="grid-auto-flow:column;align-items:center">סינון<select id="${fk}" data-filter="${fk}">${opts(cats, ui[fk], 'כל הקטגוריות')}</select></label></div>
+  <div class="tbl" style="margin-top:10px"><table><thead><tr><th>תאריך</th><th>קטגוריה</th><th>תיאור</th>${isExp ? '<th>ספק / למי</th>' : ''}<th>סכום</th>${isExp ? '<th>אמצעי תשלום</th>' : ''}<th></th></tr></thead><tbody>
+  ${rows.map(r => `<tr>
+    <td>${inp(col, r, 'date', 'w-date', 0, 'date')}</td><td>${sel(col, r, 'category', cats)}</td><td>${inp(col, r, 'desc', 'w-m')}</td>
+    ${isExp ? `<td><input id="${col}-${r.id}-supplier" class="w-s" list="supList2" data-col="${col}" data-id="${r.id}" data-f="supplier" value="${esc(r.supplier)}" ${dis()}></td>` : ''}
+    <td>${inp(col, r, 'amount', 'w-num', 1)}</td>${isExp ? `<td>${sel(col, r, 'method', S.settings.methods)}</td>` : ''}
+    <td>${r.invoiceId ? '<span class="chip acc" title="נוצר מחשבונית ששולמה">חשבונית</span>' : ''}${delBtn(col, r.id, 'מחיקה')}</td></tr>`).join('') || `<tr><td colspan="7" class="empty">אין רשומות ב${esc(monthName(month))}. בחר חודש אחר למעלה או הוסף שורה.</td></tr>`}
+  </tbody>${rows.length ? `<tfoot><tr><td colspan="${isExp ? 4 : 3}">סה"כ${ui[fk] ? ' (מסונן)' : ''}</td><td class="num">${ils(sum(rows))}</td><td colspan="2"></td></tr></tfoot>` : ''}</table></div>
+  <datalist id="supList2">${S.suppliers.map(s => `<option value="${esc(s.name)}">`).join('')}</datalist></section>`;
+}
+function expenseCats() { return [...new Set(['חומרי גלם ואריזות', ...S.settings.fixedCats, ...S.settings.varCats])]; }
+function channelsPanel() {
+  const rows = S.channels, tot = sum(rows, 'avg'), fees = rows.reduce((a, r) => a + num(r.avg) * num(r.fee) / 100, 0);
+  return `<section class="panel"><div class="head"><div><h3 style="margin:0">ממוצע חודשי לפי ערוץ (תכנון)</h3><small class="note">מהאקסל של בעל העסק: כמה נכנס בחודש רגיל, חלש וחזק, ועמלה אם יש.</small></div><button class="btn" data-act="add" data-col="channels" ${dis()}>+ ערוץ</button></div>
+  <div class="tbl" style="margin-top:10px"><table><thead><tr><th>ערוץ</th><th>ממוצע בחודש</th><th>חודש חלש</th><th>חודש חזק</th><th>עמלה %</th><th>עמלה בחודש</th><th>מקור</th><th></th></tr></thead><tbody>
+  ${rows.map(r => `<tr><td>${sel('channels', r, 'name', S.settings.incomeCats)}</td><td>${inp('channels', r, 'avg', 'w-num', 1)}</td><td>${inp('channels', r, 'low', 'w-num', 1)}</td><td>${inp('channels', r, 'high', 'w-num', 1)}</td><td>${inp('channels', r, 'fee', 'w-num', 1)}</td><td class="num">${ils(num(r.avg) * num(r.fee) / 100)}</td><td>${inp('channels', r, 'source', 'w-s')}</td><td>${delBtn('channels', r.id, 'מחיקה')}</td></tr>`).join('') || '<tr><td colspan="8" class="empty">אין ערוצים עדיין.</td></tr>'}
+  </tbody>${rows.length ? `<tfoot><tr><td>סה"כ</td><td class="num">${ils(tot)}</td><td class="num">${ils(sum(rows, 'low'))}</td><td class="num">${ils(sum(rows, 'high'))}</td><td></td><td class="num">${ils(fees)}</td><td colspan="2"></td></tr></tfoot>` : ''}</table></div></section>`;
+}
+PAGES.expenses = () => ledgerPage('expenses');
+PAGES.income = () => ledgerPage('income');
+
+/* ---------- קבועות ושוטפות ---------- */
+PAGES.budget = () => {
+  const part = kind => {
+    const rows = S.recurring.filter(r => (r.kind || 'fixed') === kind).sort((a, b) => recMonthly(b) - recMonthly(a));
+    const cats = kind === 'fixed' ? S.settings.fixedCats : S.settings.varCats;
+    const tot = rows.reduce((a, r) => a + recMonthly(r), 0);
+    return `<section class="panel"><div class="head"><div><h3 style="margin:0">${kind === 'fixed' ? 'הוצאות קבועות' : 'הוצאות שוטפות (משתנות)'}</h3><small class="note">${kind === 'fixed' ? 'משלמים גם בחודש בלי מכירות: מקום, ביטוח, רישיון, רו"ח, קופה.' : 'משתנות מחודש לחודש: גז, דלק, תיקונים, שיווק, עמלות. רושמים ממוצע לחודש.'}</small></div><button class="btn" data-act="add" data-col="recurring" data-kind="${kind}" ${dis()}>+ הוצאה</button></div>
+    <div class="tbl" style="margin-top:10px"><table><thead><tr><th>שם</th><th>קטגוריה</th><th>סכום כולל מע"מ</th>${kind === 'fixed' ? '<th>תדירות</th>' : '<th>חודש חלש</th><th>חודש חזק</th>'}<th>בחודש</th><th>למי</th><th></th></tr></thead><tbody>
+    ${rows.map(r => `<tr><td>${inp('recurring', r, 'name', 'w-m')}</td><td>${sel('recurring', r, 'category', cats)}</td><td>${inp('recurring', r, 'amount', 'w-num', 1)}</td>
+      ${kind === 'fixed' ? `<td><select id="recurring-${r.id}-freq" data-col="recurring" data-id="${r.id}" data-f="freq" ${dis()}>${kvOpts(FREQ, r.freq || 'monthly')}</select></td>` : `<td>${inp('recurring', r, 'low', 'w-num', 1)}</td><td>${inp('recurring', r, 'high', 'w-num', 1)}</td>`}
+      <td class="num">${ils(recMonthly(r))}</td><td>${inp('recurring', r, 'payee', 'w-s')}</td><td>${delBtn('recurring', r.id, 'מחיקה')}</td></tr>`).join('') || '<tr><td colspan="8" class="empty">אין הוצאות עדיין.</td></tr>'}
+    </tbody>${rows.length ? `<tfoot><tr><td colspan="${kind === 'fixed' ? 4 : 5}">סה"כ בחודש</td><td class="num">${ils(tot)}</td><td colspan="2"></td></tr></tfoot>` : ''}</table></div></section>`;
+  };
+  const ohm = overheadMonthly(), units = totalUnits(), auto = S.dishes.reduce((a, d) => a + num(d.monthlySales), 0);
+  return `<div class="head"><div><h2>הוצאות קבועות ושוטפות</h2><p class="lead">הבסיס לחישוב העלות המלאה של כל מנה ולנקודת האיזון. הסכום החודשי מתחלק על כל המנות שנמכרות בחודש.</p></div></div>
+  <div class="kpis">
+    <div class="kpi"><div class="l">סה"כ בחודש${isMurshe() ? ' (ללא מע"מ)' : ''}</div><div class="v num">${ils(ohm)}</div><div class="s">${ils(ohm * 12)} בשנה</div></div>
+    <div class="kpi"><div class="l">מנות בחודש לחלוקה</div><div class="v num"><input id="monthlyUnits" type="number" inputmode="numeric" data-setting="monthlyUnits" value="${esc(S.settings.monthlyUnits || '')}" placeholder="${auto}" style="width:7em;font-size:1.1rem" ${dis()}></div><div class="s">ריק = לפי מכירות המנות (${nf0.format(auto)})</div></div>
+    <div class="kpi"><div class="l">העמסה על כל מנה</div><div class="v num">${ils(overheadPerUnit(), 2)}</div><div class="s">${nf0.format(units)} מנות בחודש</div></div>
+  </div>
+  ${part('fixed')}${part('variable')}`;
+};
+
+/* ---------- חשבוניות ---------- */
+PAGES.invoices = () => {
+  const all = S.invoices.map(i => ({ i, st: invState(i), due: dueDate(i) }));
+  const f = ui.invFilter;
+  const rows = all.filter(r => f === 'all' || (f === 'open' && r.st[0] !== 'paid') || (f === 'late' && r.st[0] === 'late') || (f === 'paid' && r.st[0] === 'paid'))
+    .sort((a, b) => (a.st[0] === 'paid') - (b.st[0] === 'paid') || (a.due || 0) - (b.due || 0));
+  const open = all.filter(r => r.st[0] !== 'paid');
+  const byTerm = Object.keys(TERMS).map(k => [k, open.filter(r => (r.i.terms || 'immediate') === k)]).filter(x => x[1].length);
+  const notSent = S.invoices.filter(i => !i.sentToAccountant);
+  return `
+  <div class="head"><div><h2>חשבוניות ספקים</h2><p class="lead">כל חשבונית עם תנאי התשלום שלה. תאריך התשלום מחושב לבד: מיידי ביום החשבונית, שוטף+30 הוא 30 יום אחרי סוף החודש של החשבונית.</p></div>
+  <button class="btn pri" data-act="invForm" ${dis()}>${ui.invForm ? 'סגירת טופס' : '+ חשבונית'}</button></div>
+  <div class="kpis">
+    <div class="kpi"><div class="l">פתוח לתשלום</div><div class="v num">${ils(sum(open.map(r => r.i)))}</div><div class="s">${open.length} חשבוניות</div></div>
+    <div class="kpi"><div class="l">באיחור</div><div class="v num ${open.some(r => r.st[0] === 'late') ? 'neg' : ''}">${ils(sum(open.filter(r => r.st[0] === 'late').map(r => r.i)))}</div><div class="s">${open.filter(r => r.st[0] === 'late').length} חשבוניות</div></div>
+    <div class="kpi"><div class="l">לתשלום ב-7 הימים הקרובים</div><div class="v num">${ils(sum(open.filter(r => r.st[0] === 'soon').map(r => r.i)))}</div><div class="s">${open.filter(r => r.st[0] === 'soon').length} חשבוניות</div></div>
+  </div>
+  ${byTerm.length ? `<section class="panel"><h3>פתוח לפי תנאי תשלום</h3><div class="bars">${byTerm.map(([k, rs]) => `<div class="bar exp"><span>${TERMS[k][0]}</span><div class="t"><span style="width:${(sum(rs.map(r => r.i)) / Math.max(...byTerm.map(x => sum(x[1].map(r => r.i))))) * 100}%"></span></div><span class="num">${ils(sum(rs.map(r => r.i)))} · ${rs.length}</span></div>`).join('')}</div></section>` : ''}
+  ${ui.invForm ? invForm() : ''}
+  <div class="row"><div class="seg" role="group" aria-label="סינון חשבוניות">${[['open', 'פתוחות'], ['late', 'באיחור'], ['paid', 'שולמו'], ['all', 'הכל']].map(([k, l]) => `<button data-act="invFilter" data-v="${k}" aria-pressed="${f === k}">${l}</button>`).join('')}</div></div>
+  <div class="tbl"><table><thead><tr><th>ספק</th><th>מס' חשבונית</th><th>תאריך</th><th>סכום</th><th>תנאי תשלום</th><th>לתשלום עד</th><th>מצב</th><th>סטטוס</th><th>קובץ</th><th>הועבר לרו"ח</th><th></th></tr></thead><tbody>
+  ${rows.map(({ i, st, due }) => `<tr>
+    <td><input id="invoices-${i.id}-supplier" class="w-s" list="supList3" data-col="invoices" data-id="${i.id}" data-f="supplier" value="${esc(i.supplier)}" ${dis()}></td>
+    <td>${inp('invoices', i, 'number', 'w-s')}</td><td>${inp('invoices', i, 'date', 'w-date', 0, 'date')}</td><td>${inp('invoices', i, 'amount', 'w-num', 1)}</td>
+    <td><select id="invoices-${i.id}-terms" data-col="invoices" data-id="${i.id}" data-f="terms" ${dis()}>${kvOpts(TERMS, i.terms || 'immediate')}</select></td>
+    <td class="num">${due ? fmtD(ymd(due)) : ''}</td><td><span class="chip ${st[2]}">${esc(st[1])}</span></td>
+    <td><select id="invoices-${i.id}-status" data-col="invoices" data-id="${i.id}" data-f="status" ${dis()}>${kvOpts(INV_STATUS, i.status || 'unpaid')}</select>${i.status === 'paid' && i.paidDate ? `<br><small class="note">${fmtD(i.paidDate)}</small>` : ''}</td>
+    <td>${i.fileId ? `<a href="/_blob/${esc(i.fileId)}" target="_blank" rel="noopener">${esc(i.fileName || 'צפייה')}</a>` : assets && !readonly ? `<label class="btn" for="up-${i.id}">העלאה</label><input type="file" id="up-${i.id}" accept="application/pdf,image/*" data-upload="${i.id}" hidden>` : '<span class="muted">—</span>'}</td>
+    <td><input type="checkbox" id="invoices-${i.id}-sent" data-col="invoices" data-id="${i.id}" data-f="sentToAccountant" data-bool ${i.sentToAccountant ? 'checked' : ''} ${dis()} aria-label="הועבר לרואת החשבון"></td>
+    <td>${delBtn('invoices', i.id, 'מחיקה')}</td></tr>`).join('') || `<tr><td colspan="11" class="empty">אין חשבוניות בתצוגה הזו.</td></tr>`}
+  </tbody></table></div>
+  <datalist id="supList3">${S.suppliers.map(s => `<option value="${esc(s.name)}">`).join('')}</datalist>
+  <section class="panel"><h3>רואת החשבון</h3>
+    <div class="form"><label class="field" for="accName">שם<input id="accName" data-setting="accountantName" value="${esc(S.settings.accountantName)}" ${dis()}></label>
+    <label class="field" for="accEmail">אימייל<input id="accEmail" type="email" dir="ltr" data-setting="accountantEmail" value="${esc(S.settings.accountantEmail)}" ${dis()}></label></div>
+    <div class="row" style="margin-top:10px"><button class="btn" data-act="exportAcc" ${notSent.length ? '' : 'disabled'}>ייצוא ${notSent.length} חשבוניות שלא הועברו לאקסל</button>
+    <small class="note" style="flex:1 1 260px">בינתיים מייצאים קובץ ושולחים לרואת החשבון ידנית. חיבור ישיר למערכת שלה יתווסף בהמשך, וכל חשבונית כבר מסומנת אם הועברה.</small></div>
+  </section>`;
+};
+function invForm() {
+  const f = ui.newInv || (ui.newInv = { supplier: '', number: '', date: today(), amount: '', terms: '', status: 'unpaid' });
+  return `<section class="panel"><h3>חשבונית חדשה</h3>
+  <div class="form">
+    <label class="field" for="ni-supplier">ספק<input id="ni-supplier" list="supList3" data-new="supplier" value="${esc(f.supplier)}"></label>
+    <label class="field" for="ni-number">מספר חשבונית<input id="ni-number" data-new="number" value="${esc(f.number)}"></label>
+    <label class="field" for="ni-date">תאריך<input id="ni-date" type="date" data-new="date" value="${esc(f.date)}"></label>
+    <label class="field" for="ni-amount">סכום כולל מע"מ<input id="ni-amount" type="number" step="any" inputmode="decimal" data-new="amount" value="${esc(f.amount)}"></label>
+    <label class="field" for="ni-terms">תנאי תשלום<select id="ni-terms" data-new="terms"><option value="">לפי הספק</option>${kvOpts(TERMS, f.terms)}</select></label>
+    <label class="field" for="ni-status">סטטוס<select id="ni-status" data-new="status">${kvOpts(INV_STATUS, f.status)}</select></label>
+    ${assets ? `<label class="field" for="ni-file">קובץ PDF או צילום<input id="ni-file" type="file" accept="application/pdf,image/*"></label>` : '<p class="muted" style="margin:0">העלאת קבצים זמינה בקישור המפורסם של המערכת.</p>'}
+  </div><div class="row" style="margin-top:10px"><button class="btn pri" data-act="saveInv">שמירת חשבונית</button><small class="note">ריק בתנאי תשלום = לוקח את התנאי שמוגדר לספק.</small></div></section>`;
+}
+
+/* ---------- ספקים ---------- */
+PAGES.suppliers = () => {
+  const rows = S.suppliers.slice().sort((a, b) => String(a.name).localeCompare(b.name, 'he'));
+  const open = n => sum(S.invoices.filter(i => i.supplier === n && i.status !== 'paid'));
+  return `<div class="head"><div><h2>ספקים</h2><p class="lead">תנאי התשלום של הספק נכנסים אוטומטית לכל חשבונית חדשה שלו. הקישור להזמנה ישמש בהמשך להתראות מלאי.</p></div><button class="btn pri" data-act="add" data-col="suppliers" ${dis()}>+ ספק</button></div>
+  <div class="tbl"><table><thead><tr><th>שם</th><th>מה קונים</th><th>איש קשר</th><th>טלפון</th><th>אימייל</th><th>קישור להזמנה</th><th>תנאי תשלום</th><th>פתוח לתשלום</th><th></th></tr></thead><tbody>
+  ${rows.map(s => `<tr><td>${inp('suppliers', s, 'name', 'w-m')}</td><td>${inp('suppliers', s, 'buys', 'w-s')}</td><td>${inp('suppliers', s, 'contact', 'w-s')}</td><td>${inp('suppliers', s, 'phone', 'w-s', 0, 'tel')}</td><td>${inp('suppliers', s, 'email', 'w-s', 0, 'email')}</td>
+    <td style="white-space:nowrap">${inp('suppliers', s, 'website', 'w-s', 0, 'url')}${/^https?:\/\//.test(s.website || '') ? ` <a href="${esc(s.website)}" target="_blank" rel="noopener" aria-label="פתיחת אתר הספק">↗</a>` : ''}</td>
+    <td><select id="suppliers-${s.id}-terms" data-col="suppliers" data-id="${s.id}" data-f="terms" ${dis()}>${kvOpts(TERMS, s.terms || 'immediate')}</select></td>
+    <td class="num">${ils(open(s.name))}</td><td>${delBtn('suppliers', s.id, 'מחיקה')}</td></tr>`).join('') || '<tr><td colspan="9" class="empty">אין ספקים עדיין.</td></tr>'}
+  </tbody></table></div>`;
+};
+
+/* ---------- נתונים והגדרות ---------- */
+PAGES.data = () => {
+  const s = S.settings, imp = ui.imp;
+  const listField = (k, l) => `<label class="field" for="set-${k}">${l}<textarea id="set-${k}" rows="3" data-setting="${k}" data-list ${dis()}>${esc((s[k] || []).join(', '))}</textarea></label>`;
+  return `<div class="head"><div><h2>נתונים והגדרות</h2><p class="lead">ייבוא הנתונים מהאקסל שבעל העסק ממלא, גיבוי לאקסל, והגדרות החישוב.</p></div></div>
+  <section class="panel"><h3>ייבוא מאקסל</h3>
+    <p class="muted" style="margin:0 0 10px">בוחרים את קובץ האקסל של איסוף הנתונים. שורות הדוגמה בקובץ מדולגות אוטומטית. לפני השמירה מוצג סיכום של מה שנמצא.</p>
+    <div class="row"><label class="btn ${readonly ? '' : 'pri'}" for="impFile">בחירת קובץ אקסל</label><input id="impFile" type="file" accept=".xlsx,.xls,.csv" hidden ${dis()}>${typeof XLSX === 'undefined' ? '<small class="neg">ספריית האקסל לא נטענה. בדוק חיבור לאינטרנט.</small>' : ''}</div>
+    ${imp ? `<div style="margin-top:12px" class="grid">
+      <div class="tbl"><table><thead><tr><th>גיליון</th><th>שורות שנמצאו</th></tr></thead><tbody>${imp.summary.map(([k, n]) => `<tr><td>${esc(k)}</td><td class="num">${n}</td></tr>`).join('')}</tbody></table></div>
+      ${imp.warnings.length ? `<div class="banner"><b>שימו לב:</b> ${imp.warnings.slice(0, 8).map(esc).join(' · ')}${imp.warnings.length > 8 ? ` ועוד ${imp.warnings.length - 8}` : ''}</div>` : ''}
+      <div class="row"><button class="btn pri" data-act="impApply" data-mode="replace" ${dis()}>החלפת כל הנתונים בנתונים מהקובץ</button><button class="btn" data-act="impApply" data-mode="merge" ${dis()}>הוספה לנתונים הקיימים</button><button class="btn ghost" data-act="impCancel">ביטול</button></div>
+      <small class="note">"החלפה" מוחקת את כל נתוני הדוגמה ואת מה שנמצא כרגע בגיליונות שיובאו, ושומרת את השאר.</small></div>` : ''}
+    ${ui.impBusy ? `<p class="muted">${esc(ui.impBusy)}</p>` : ''}
+  </section>
+  <section class="panel"><h3>גיבוי וייצוא</h3><div class="row">
+    <button class="btn" data-act="exportAll">ייצוא כל הנתונים לאקסל</button>
+    ${hasSample() ? `${delBtn('sample', 'all', 'מחיקת נתוני הדוגמה').replace('>✕<', '>מחיקת נתוני הדוגמה<')}` : ''}
+  </div><small class="note">קובץ הייצוא בנוי באותו מבנה של קובץ האיסוף, כך שאפשר לערוך ולייבא אותו בחזרה.</small></section>
+  <section class="panel"><h3>הגדרות חישוב</h3><div class="form">
+    <label class="field" for="set-businessType">סוג עוסק<select id="set-businessType" data-setting="businessType" ${dis()}>${kvOpts({ murshe: 'עוסק מורשה / חברה', patur: 'עוסק פטור' }, s.businessType)}</select></label>
+    <label class="field" for="set-vat">מע"מ %<input id="set-vat" type="number" step="0.5" data-setting="vat" data-num value="${esc(s.vat)}" ${dis()}></label>
+    <label class="field" for="set-fcGood">עלות מזון "ירוקה" עד %<input id="set-fcGood" type="number" data-setting="fcGood" data-num value="${esc(s.fcGood)}" ${dis()}></label>
+    <label class="field" for="set-fcWarn">עלות מזון "צהובה" עד %<input id="set-fcWarn" type="number" data-setting="fcWarn" data-num value="${esc(s.fcWarn)}" ${dis()}></label>
+    <label class="field" for="set-targetFc">יעד עלות מזון למחיר מומלץ %<input id="set-targetFc" type="number" data-setting="targetFc" data-num value="${esc(s.targetFc)}" ${dis()}></label>
+    <label class="field" for="set-workDays">ימי פעילות בחודש<input id="set-workDays" type="number" data-setting="workDays" data-num value="${esc(s.workDays)}" ${dis()}></label>
+    <label class="field" for="set-autoLedger">חשבונית ששולמה נרשמת ביומן ההוצאות<select id="set-autoLedger" data-setting="autoLedger" data-boolsel ${dis()}><option value="1" ${s.autoLedger ? 'selected' : ''}>כן</option><option value="0" ${!s.autoLedger ? 'selected' : ''}>לא</option></select></label>
+  </div>
+  <p class="muted" style="margin:10px 0 0;font-size:.88rem">${isMurshe() ? 'בעוסק מורשה כל העלויות והמחירים מחושבים ללא מע"מ, כי המע"מ על קניות מתקזז.' : 'בעוסק פטור אין קיזוז מע"מ, ולכן העלויות כוללות מע"מ והמחיר ללקוח הוא ההכנסה.'}</p></section>
+  <section class="panel"><h3>קטגוריות</h3><p class="muted" style="margin:0 0 10px">זמניות. נדייק אחרי שנקבל את הנתונים של בעל העסק. מפרידים בפסיק.</p><div class="grid g2">
+    ${listField('ingCats', 'קטגוריות חומרי גלם')}${listField('dishCats', 'קטגוריות מנות')}${listField('fixedCats', 'קטגוריות הוצאות קבועות')}${listField('varCats', 'קטגוריות הוצאות שוטפות')}${listField('incomeCats', 'ערוצי הכנסה')}${listField('methods', 'אמצעי תשלום')}
+  </div></section>
+`;
+};
+
+/* ===================== אירועים ===================== */
+document.addEventListener('change', async e => {
+  const t = e.target;
+  if (t.id === 'monthSel') { month = t.value || ymNow(); render(); return; }
+  if (t.id === 'dishSort') { ui.dishSort = t.value; render(); return; }
+  if (t.id === 'optSel') { ui.optId = t.value; ui.sim = null; ui.claude = ''; render(); return; }
+  if (t.dataset.filter) { ui[t.dataset.filter] = t.value; render(); return; }
+  if (t.id === 'impFile') { readImport(t.files[0]); t.value = ''; return; }
+  if (t.dataset.upload) { uploadFor(t.dataset.upload, t.files[0]); return; }
+  if (t.dataset.new) { ui.newInv[t.dataset.new] = t.value; return; }
+  if (t.dataset.simprice !== undefined) { ui.sim.price = num(t.value); render(); return; }
+  if (t.dataset.sim !== undefined) { const it = ui.sim.items[+t.dataset.sim]; it[t.dataset.f] = t.dataset.f === 'qty' ? num(t.value) : t.value; render(); return; }
+  if (t.dataset.setting) {
+    let v = t.value;
+    if (t.dataset.num !== undefined || t.type === 'number') v = num(v);
+    if (t.dataset.list !== undefined) v = v.split(/[,\n]/).map(x => x.trim()).filter(Boolean);
+    if (t.dataset.boolsel !== undefined) v = v === '1';
+    saveSettings({ [t.dataset.setting]: v }); return;
+  }
+  if (t.dataset.dish) {
+    const d = S.dishes.find(x => x.id === t.dataset.dish); if (!d) return;
+    const items = (d.items || []).map(x => ({ ...x }));
+    items[+t.dataset.i][t.dataset.f] = t.dataset.f === 'qty' ? num(t.value) : t.value;
+    patch('dishes', d.id, { items }); return;
+  }
+  if (t.dataset.col && t.dataset.id) {
+    const f = t.dataset.f, col = t.dataset.col;
+    let v = t.dataset.bool !== undefined ? t.checked : t.dataset.num !== undefined ? num(t.value) : t.value;
+    const part = { [f]: v };
+    if (col === 'invoices' && f === 'status') onInvoiceStatus(t.dataset.id, v, part);
+    patch(col, t.dataset.id, part);
+  }
+});
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  const a = b.dataset.act, id = b.dataset.id;
+  if (a !== 'del' && ui.confirm) ui.confirm = null;
+  if (a === 'openDish') { ui.dishId = ui.dishId === id ? null : id; render(); if (ui.dishId) $('#dishEditor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if (a === 'closeDish') { ui.dishId = null; render(); return; }
+  if (a === 'showIssue') { setTimeout(() => $('#salesIssue')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 250); return; }
+  if (a === 'optDish') { ui.optId = id; ui.sim = null; ui.claude = ''; return; }
+  if (a === 'addDish') { const nid = newId('d'); await put('dishes', { id: nid, name: 'מנה חדשה', category: '', price: 0, monthlySales: 0, items: [] }); ui.dishId = nid; render(); $('#dn-' + nid)?.select(); return; }
+  if (a === 'dupDish') { const d = S.dishes.find(x => x.id === id); const nid = newId('d'); await put('dishes', { ...JSON.parse(JSON.stringify(d)), id: nid, name: d.name + ' (עותק)', sample: false }); ui.dishId = nid; render(); return; }
+  if (a === 'addLine') { const d = S.dishes.find(x => x.id === id); patch('dishes', id, { items: [...(d.items || []), { ingId: '', qty: 0 }] }); return; }
+  if (a === 'rmLine') { const d = S.dishes.find(x => x.id === id); patch('dishes', id, { items: (d.items || []).filter((_, i) => i !== +b.dataset.i) }); return; }
+  if (a === 'del') {
+    const key = b.dataset.col + ':' + id;
+    if (ui.confirm !== key) { ui.confirm = key; render(); return; }
+    ui.confirm = null;
+    if (b.dataset.col === 'sample') { await removeSample(); return; }
+    if (b.dataset.col === 'dishes' && ui.dishId === id) ui.dishId = null;
+    del(b.dataset.col, id); toast('נמחק'); return;
+  }
+  if (a === 'add') { addRow(b.dataset.col, b.dataset.kind); return; }
+  if (a === 'applySugg') { const d = S.dishes.find(x => x.id === ui.optId); const s = suggestions(d, calc(d))[+b.dataset.i]; if (s && s.apply) { if (s.apply.items) ui.sim.items = JSON.parse(JSON.stringify(s.apply.items)); if (s.apply.price) ui.sim.price = s.apply.price; render(); toast('ההצעה הוכנסה לסימולציה'); } return; }
+  if (a === 'simAdd') { ui.sim.items.push({ ingId: '', qty: 0 }); render(); return; }
+  if (a === 'simRm') { ui.sim.items.splice(+b.dataset.i, 1); render(); return; }
+  if (a === 'simReset') { ui.sim = null; render(); return; }
+  if (a === 'simSave') { await patch('dishes', ui.optId, { items: ui.sim.items.filter(l => l.ingId), price: num(ui.sim.price) }); ui.sim = null; toast('המנה עודכנה'); render(); return; }
+  if (a === 'simSaveNew') { const d = S.dishes.find(x => x.id === ui.optId); const nid = newId('d'); await put('dishes', { ...d, id: nid, name: d.name + ' (גרסה משופרת)', items: ui.sim.items.filter(l => l.ingId), price: num(ui.sim.price), monthlySales: 0, sample: false }); ui.optId = nid; ui.sim = null; toast('נשמרה מנה חדשה'); render(); return; }
+  if (a === 'askClaude') { askClaude(); return; }
+  if (a === 'invFilter') { ui.invFilter = b.dataset.v; render(); return; }
+  if (a === 'invForm') { ui.invForm = !ui.invForm; render(); return; }
+  if (a === 'saveInv') { saveNewInvoice(); return; }
+  if (a === 'exportAll') { exportAll(); return; }
+  if (a === 'exportAcc') { exportAccountant(); return; }
+  if (a === 'impApply') { applyImport(b.dataset.mode); return; }
+  if (a === 'impCancel') { ui.imp = null; render(); return; }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.confirm) { ui.confirm = null; render(); } });
+
+function addRow(col, kind) {
+  const base = {
+    ingredients: { name: '', category: '', supplier: '', packQty: 1, packUnit: 'unit', packPrice: 0, waste: 0 },
+    expenses: { date: month === ymNow() ? today() : month + '-01', category: '', desc: '', supplier: '', amount: 0, method: '' },
+    income: { date: month === ymNow() ? today() : month + '-01', category: '', desc: '', amount: 0 },
+    recurring: { kind: kind || 'fixed', name: '', category: '', amount: 0, freq: 'monthly' },
+    channels: { name: '', avg: 0, low: 0, high: 0, fee: 0, source: '' },
+    suppliers: { name: '', buys: '', contact: '', phone: '', email: '', website: '', terms: 'immediate' },
+  }[col] || {};
+  const id = newId(col[0]);
+  put(col, { id, ...base }).then(() => { render(); const el = document.getElementById(`${col}-${id}-${col === 'expenses' || col === 'income' ? 'desc' : col === 'history' ? 'income' : 'name'}`); el && el.focus(); });
+}
+function onInvoiceStatus(id, v, part) {
+  const inv = S.invoices.find(x => x.id === id); if (!inv) return;
+  if (v === 'paid' && !inv.paidDate) part.paidDate = today();
+  if (v === 'paid' && S.settings.autoLedger && !S.expenses.some(x => x.invoiceId === id)) {
+    put('expenses', { id: newId('e'), date: part.paidDate || inv.paidDate || today(), category: guessCat(inv.supplier), desc: `תשלום חשבונית ${inv.number || ''}`.trim(), supplier: inv.supplier, amount: num(inv.amount), method: inv.method || '', invoiceId: id });
+    toast('החשבונית סומנה כשולמה ונרשמה ביומן ההוצאות');
+  }
+}
+function guessCat(supplier) {
+  const ing = S.ingredients.some(i => i.supplier === supplier);
+  if (ing) return 'חומרי גלם ואריזות';
+  const prev = S.expenses.find(e => e.supplier === supplier && e.category); return prev ? prev.category : 'חומרי גלם ואריזות';
+}
+async function saveNewInvoice() {
+  const f = ui.newInv; if (!f.supplier || !num(f.amount)) { toast('צריך לפחות ספק וסכום'); return; }
+  const sup = S.suppliers.find(s => s.name === f.supplier);
+  const inv = { id: newId('v'), supplier: f.supplier, number: f.number, date: f.date || today(), amount: num(f.amount), terms: f.terms || (sup && sup.terms) || 'immediate', status: f.status || 'unpaid', paidDate: f.status === 'paid' ? today() : '', method: '', sentToAccountant: false, fileId: '', fileName: '', notes: '' };
+  const file = $('#ni-file') && $('#ni-file').files[0];
+  if (file && assets) { try { toast('מעלה קובץ…'); const r = await assets.upload(file); inv.fileId = r.id; inv.fileName = file.name; } catch (e) { toast('העלאת הקובץ נכשלה. החשבונית תישמר בלי קובץ.'); } }
+  await put('invoices', inv);
+  if (inv.status === 'paid') onInvoiceStatus(inv.id, 'paid', {});
+  ui.newInv = null; ui.invForm = false; toast('החשבונית נשמרה'); render();
+}
+async function uploadFor(id, file) {
+  if (!file || !assets) return;
+  try { toast('מעלה קובץ…'); const r = await assets.upload(file); await patch('invoices', id, { fileId: r.id, fileName: file.name }); toast('הקובץ צורף'); }
+  catch (e) { toast('העלאת הקובץ נכשלה' + (e && e.code === 'too_large' ? ': הקובץ גדול מדי' : '')); }
+}
+async function removeSample() {
+  const tasks = []; COLS.forEach(c => S[c].filter(x => x.sample).forEach(x => tasks.push(() => del(c, x.id))));
+  ui.impBusy = 'מוחק נתוני דוגמה…'; render();
+  await bulk(tasks); ui.impBusy = ''; toast('נתוני הדוגמה נמחקו'); render();
+}
+
+/* ===================== אקסל ===================== */
+const SHEETS = {
+  ingredients: { name: 'חומרי גלם', match: ['חומרי גלם'], cols: [['name', 'שם חומר הגלם', ['שם']], ['category', 'קטגוריה'], ['supplier', 'ספק'], ['brand', 'מותג / מק"ט', ['מותג']], ['packUnit', 'יחידת מידה', ['יחידה']], ['packQty', 'כמות באריזה', ['כמות']], ['packPrice', 'מחיר אריזה כולל מע"מ (₪)', ['מחיר אריזה כולל', 'מחיר אריזה', 'מחיר']], ['monthlyPacks', 'כמה אריזות קונים בחודש (הערכה)', ['אריזות קונים', 'אריזות בחודש']], ['minStock', 'מלאי מינימום (באריזות)', ['מלאי מינימום']], ['waste', 'פחת %', ['פחת']], ['link', 'קישור ישיר למוצר באתר הספק', ['קישור']], ['notes', 'הערות']] },
+  dishes: { name: 'מנות', match: ['מנות'], cols: [['name', 'שם המנה', ['שם']], ['category', 'קטגוריה'], ['price', 'מחיר מכירה ללקוח כולל מע"מ (₪)', ['מחיר מכירה', 'מחיר']], ['monthlySales', 'כמה נמכר בחודש (הערכה)', ['נמכר', 'מכירות']], ['notes', 'הערות']] },
+  recipes: { name: 'מתכונים', match: ['מתכונים', 'מתכון'], cols: [['dish', 'שם המנה', ['מנה']], ['ing', 'מרכיב', ['חומר גלם']], ['qty', 'כמות למנה', ['כמות']], ['unit', 'יחידה'], ['notes', 'הערות']] },
+  suppliers: { name: 'ספקים', match: ['ספקים'], cols: [['name', 'שם הספק', ['שם']], ['buys', 'מה קונים ממנו', ['מה קונים']], ['contact', 'איש קשר'], ['phone', 'טלפון'], ['email', 'אימייל', ['מייל']], ['website', 'אתר / קישור להזמנה', ['אתר', 'קישור']], ['terms', 'תנאי תשלום'], ['method', 'אמצעי תשלום'], ['orderFreq', 'תדירות הזמנה', ['תדירות']], ['minOrder', 'מינימום הזמנה (₪)', ['מינימום']], ['notes', 'הערות']] },
+  fixed: { name: 'הוצאות קבועות', match: ['קבועות'], cols: [['name', 'שם ההוצאה', ['שם']], ['category', 'קטגוריה'], ['amount', 'סכום לתשלום כולל מע"מ (₪)', ['סכום לתשלום', 'סכום']], ['freq', 'תדירות'], ['payee', 'למי משלמים', ['למי']], ['method', 'אמצעי תשלום'], ['chargeDay', 'יום / חודש חיוב', ['חיוב']], ['endDate', 'תאריך סיום', ['סיום']], ['notes', 'הערות']] },
+  variable: { name: 'הוצאות שוטפות', match: ['שוטפות'], cols: [['name', 'שם ההוצאה', ['שם']], ['category', 'קטגוריה'], ['amount', 'סכום ממוצע בחודש כולל מע"מ (₪)', ['ממוצע', 'סכום']], ['low', 'בחודש חלש (₪)', ['חלש']], ['high', 'בחודש חזק (₪)', ['חזק']], ['payee', 'למי משלמים', ['למי']], ['method', 'אמצעי תשלום'], ['notes', 'הערות']] },
+  channels: { name: 'הכנסות', match: ['הכנסות'], exclude: ['יומן'], cols: [['name', 'ערוץ הכנסה', ['ערוץ']], ['avg', 'הכנסה ממוצעת בחודש כולל מע"מ (₪)', ['ממוצעת', 'ממוצע']], ['low', 'בחודש חלש (₪)', ['חלש']], ['high', 'בחודש חזק (₪)', ['חזק']], ['fee', 'עמלה (%)', ['עמלה (%)', 'עמלה %']], ['source', 'מאיפה המספר?', ['מאיפה', 'מקור']], ['notes', 'הערות']] },
+  invoices: { name: 'חשבוניות ספקים', match: ['חשבוניות'], cols: [['number', 'מספר חשבונית', ['מספר']], ['supplier', 'ספק'], ['date', 'תאריך חשבונית', ['תאריך חשבונית', 'תאריך']], ['amount', 'סכום כולל מע"מ (₪)', ['סכום']], ['terms', 'תנאי תשלום'], ['status', 'סטטוס תשלום', ['סטטוס']], ['paidDate', 'תאריך תשלום בפועל', ['תשלום בפועל']], ['method', 'אמצעי תשלום'], ['sentToAccountant', 'הועבר לרו"ח?', ['הועבר']], ['notes', 'הערות']] },
+  expenses: { name: 'יומן הוצאות', match: ['יומן הוצאות'], cols: [['date', 'תאריך'], ['category', 'קטגוריה'], ['desc', 'תיאור'], ['supplier', 'ספק / למי', ['ספק', 'למי']], ['amount', 'סכום'], ['method', 'אמצעי תשלום']] },
+  income: { name: 'יומן הכנסות', match: ['יומן הכנסות'], cols: [['date', 'תאריך'], ['category', 'ערוץ', ['קטגוריה']], ['desc', 'תיאור'], ['amount', 'סכום']] },
+  business: { name: 'פרטי העסק', match: ['פרטי העסק'], cols: [['topic', 'נושא'], ['answer', 'תשובה'], ['notes', 'הערות']] },
+};
+const norm = s => String(s ?? '').replace(/[\s"'״׳]/g, '').toLowerCase();
+function parseUnit(v) { const s = norm(v); if (!s) return 'unit'; if (/קג|קילו|kg/.test(s)) return 'kg'; if (/מל|ml/.test(s)) return 'ml'; if (/ליטר|^ל$|^l$/.test(s)) return 'l'; if (/גרם|^ג$|^g$|gr/.test(s)) return 'g'; return 'unit'; }
+function parseTerms(v) { const s = norm(v); if (!s || /מיידי|מזומן/.test(s)) return 'immediate'; const m = s.match(/(\d+)/); if (m) return { 30: 'net30', 45: 'net45', 60: 'net60', 90: 'net90' }[m[1]] || 'net30'; if (/שוטף/.test(s)) return 'net0'; return 'immediate'; }
+function parseFreq(v) { const s = norm(v); if (/דו/.test(s)) return 'bimonthly'; if (/רבעו/.test(s)) return 'quarterly'; if (/חצי/.test(s)) return 'semiannual'; if (/שנת/.test(s)) return 'yearly'; return 'monthly'; }
+function parseStatus(v) { const s = norm(v); if (/חלקי/.test(s)) return 'partial'; if (/מחלוקת/.test(s)) return 'disputed'; if (/^שולם/.test(s)) return 'paid'; return 'unpaid'; }
+function parseDate(v) {
+  if (v instanceof Date && !isNaN(v)) return ymd(new Date(v.getFullYear(), v.getMonth(), v.getDate(), 12));
+  if (typeof v === 'number' && v > 20000 && v < 80000) { const d = new Date(Math.round((v - 25569) * 864e5)); return ymd(new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); }
+  const s = String(v ?? '').trim(); let m;
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+  if ((m = s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{2,4})$/))) { const y = m[3].length === 2 ? '20' + m[3] : m[3]; return `${y}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`; }
+  if ((m = s.match(/^(\d{1,2})[./](\d{4})$/))) return `${m[2]}-${m[1].padStart(2, '0')}-01`;
+  return '';
+}
+const pctVal = v => { const n = num(v); return n > 0 && n <= 1 && typeof v === 'number' ? n * 100 : n; };
+const yes = v => /^(כן|v|✓|true|1|yes)$/i.test(String(v ?? '').trim());
+
+function readImport(file) {
+  if (!file) return;
+  if (typeof XLSX === 'undefined') { toast('ספריית האקסל לא נטענה'); return; }
+  const fr = new FileReader();
+  fr.onload = () => {
+    try { ui.imp = parseWorkbook(XLSX.read(new Uint8Array(fr.result), { type: 'array', cellDates: true })); }
+    catch (e) { ui.imp = null; toast('לא הצלחתי לקרוא את הקובץ. ודא שזה קובץ אקסל תקין.'); }
+    render();
+  };
+  fr.readAsArrayBuffer(file);
+}
+function sheetRows(ws, spec) {
+  const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
+  let hi = -1, map = null;
+  for (let r = 0; r < Math.min(aoa.length, 15); r++) {
+    const hdr = aoa[r].map(norm);
+    const m = {}; let hits = 0;
+    spec.cols.forEach(([key, label, alts]) => {
+      const cands = [label, ...(alts || [])].map(norm);
+      let idx = hdr.findIndex(h => h && h === cands[0]);
+      if (idx < 0) for (const c of cands) { idx = hdr.findIndex((h, j) => h && h.includes(c) && !Object.values(m).includes(j)); if (idx >= 0) break; }
+      if (idx >= 0) { m[key] = idx; hits++; }
+    });
+    if (hits >= 2) { hi = r; map = m; break; }
+  }
+  if (hi < 0) return [];
+  const out = [];
+  for (let r = hi + 1; r < aoa.length; r++) {
+    const row = aoa[r];
+    if (row.some(c => /שורת דוגמה/.test(String(c)))) continue;
+    const o = {}; let any = false;
+    for (const k in map) { let v = row[map[k]]; if (typeof v === 'string') v = v.trim(); if (typeof v === 'string' && v.startsWith('=')) v = ''; o[k] = v; }
+    const first = o[spec.cols[0][0]];
+    any = first !== '' && first != null;
+    if (any) out.push(o);
+  }
+  return out;
+}
+function parseWorkbook(wb) {
+  const found = {}, warnings = [];
+  for (const [key, spec] of Object.entries(SHEETS)) {
+    const nm = wb.SheetNames.find(n => spec.match.some(m => norm(n).includes(norm(m))) && !(spec.exclude || []).some(x => norm(n).includes(norm(x))));
+    if (nm) found[key] = sheetRows(wb.Sheets[nm], spec);
+  }
+  const res = { sets: {}, settings: {}, summary: [], warnings };
+  const sid = p => newId(p);
+  if (found.suppliers) res.sets.suppliers = found.suppliers.map(r => ({ id: sid('s'), name: String(r.name), buys: r.buys || '', contact: r.contact || '', phone: String(r.phone || ''), email: r.email || '', website: r.website || '', terms: parseTerms(r.terms), method: r.method || '', orderFreq: r.orderFreq || '', minOrder: num(r.minOrder) || '', notes: r.notes || '' }));
+  if (found.ingredients) res.sets.ingredients = found.ingredients.map(r => {
+    if (!num(r.packPrice)) warnings.push(`חסר מחיר ל"${r.name}"`);
+    return { id: sid('i'), name: String(r.name), category: r.category || '', supplier: r.supplier || '', brand: r.brand || '', packUnit: parseUnit(r.packUnit), packQty: num(r.packQty) || 1, packPrice: num(r.packPrice), monthlyPacks: num(r.monthlyPacks) || '', minStock: num(r.minStock) || '', waste: pctVal(r.waste), link: r.link || '', notes: r.notes || '' };
+  });
+  if (found.dishes) {
+    const ingByName = {}; (res.sets.ingredients || S.ingredients).forEach(i => (ingByName[norm(i.name)] = i));
+    const dishes = found.dishes.map(r => ({ id: sid('d'), name: String(r.name), category: r.category || '', price: num(r.price), monthlySales: num(r.monthlySales), notes: r.notes || '', items: [] }));
+    const dByName = {}; dishes.forEach(d => (dByName[norm(d.name)] = d));
+    (found.recipes || []).forEach(r => {
+      const d = dByName[norm(r.dish)], ing = ingByName[norm(r.ing)];
+      if (!d) { warnings.push(`מתכון למנה שלא נמצאה: "${r.dish}"`); return; }
+      if (!ing) warnings.push(`המרכיב "${r.ing}" במנה "${r.dish}" לא נמצא בחומרי הגלם`);
+      let q = num(r.qty);
+      if (ing && r.unit) { const u = parseUnit(r.unit); if ((u === 'kg' || u === 'l') && baseOf(ing)[1] === 1) q *= 1000; }
+      d.items.push({ ingId: ing ? ing.id : '', qty: q });
+    });
+    res.sets.dishes = dishes;
+  }
+  const rec = [];
+  (found.fixed || []).forEach(r => rec.push({ id: sid('f'), kind: 'fixed', name: String(r.name), category: r.category || '', amount: num(r.amount), freq: parseFreq(r.freq), payee: r.payee || '', method: r.method || '', chargeDay: String(r.chargeDay || ''), endDate: parseDate(r.endDate), notes: r.notes || '' }));
+  (found.variable || []).forEach(r => rec.push({ id: sid('v'), kind: 'variable', name: String(r.name), category: r.category || '', amount: num(r.amount), freq: 'monthly', low: num(r.low) || '', high: num(r.high) || '', payee: r.payee || '', method: r.method || '', notes: r.notes || '' }));
+  if (found.fixed || found.variable) res.sets.recurring = rec;
+  if (found.channels) res.sets.channels = found.channels.map(r => ({ id: sid('c'), name: String(r.name), avg: num(r.avg), low: num(r.low), high: num(r.high), fee: pctVal(r.fee), source: r.source || '', notes: r.notes || '' }));
+  if (found.invoices) res.sets.invoices = found.invoices.filter(r => r.supplier || num(r.amount)).map(r => {
+    const sup = (res.sets.suppliers || S.suppliers).find(s => s.name === r.supplier);
+    return { id: sid('v'), number: String(r.number), supplier: r.supplier || '', date: parseDate(r.date), amount: num(r.amount), terms: r.terms ? parseTerms(r.terms) : (sup ? sup.terms : 'immediate'), status: parseStatus(r.status), paidDate: parseDate(r.paidDate), method: r.method || '', sentToAccountant: yes(r.sentToAccountant), fileId: '', fileName: '', notes: r.notes || '' };
+  });
+  if (found.expenses) res.sets.expenses = found.expenses.map(r => ({ id: sid('e'), date: parseDate(r.date), category: r.category || '', desc: r.desc || '', supplier: r.supplier || '', amount: num(r.amount), method: r.method || '' })).filter(r => r.amount);
+  if (found.income) res.sets.income = found.income.map(r => ({ id: sid('n'), date: parseDate(r.date), category: r.category || '', desc: r.desc || '', amount: num(r.amount) })).filter(r => r.amount);
+  if (found.business) found.business.forEach(r => {
+    const t = norm(r.topic), v = r.answer;
+    if (v === '' || v == null) return;
+    if (t.includes(norm('מע"מ'))) res.settings.vat = pctVal(v);
+    else if (t.includes('סוגעוסק')) res.settings.businessType = /פטור/.test(String(v)) ? 'patur' : 'murshe';
+    else if (t.includes('ימיפעילות')) { const n = num(v); res.settings.workDays = n && n <= 7 ? Math.round(n * 4.33) : n || DEF.workDays; }
+    else if (t.includes('רואתהחשבון')) res.settings.accountantName = String(v);
+    else if (t.includes('שםבעל')) res.settings.ownerName = String(v);
+  });
+  const labels = { suppliers: 'ספקים', ingredients: 'חומרי גלם', dishes: 'מנות', recurring: 'הוצאות קבועות ושוטפות', channels: 'ערוצי הכנסה', invoices: 'חשבוניות', expenses: 'יומן הוצאות', income: 'יומן הכנסות' };
+  for (const k in res.sets) res.summary.push([labels[k], res.sets[k].length]);
+  if (found.recipes) res.summary.push(['שורות מתכון', found.recipes.length]);
+  if (Object.keys(res.settings).length) res.summary.push(['פרטי העסק', Object.keys(res.settings).length + ' הגדרות']);
+  if (!res.summary.length) warnings.push('לא נמצאו גיליונות מוכרים בקובץ');
+  return res;
+}
+async function applyImport(modeSel) {
+  const imp = ui.imp; if (!imp) return;
+  ui.impBusy = 'שומר נתונים…'; render();
+  const tasks = [];
+  if (modeSel === 'replace') {
+    COLS.forEach(c => { const replacing = !!imp.sets[c]; S[c].filter(x => replacing || x.sample).forEach(x => tasks.push(() => del(c, x.id))); });
+  }
+  await bulk(tasks);
+  const w = []; for (const c in imp.sets) imp.sets[c].forEach(o => w.push(() => put(c, o)));
+  await bulk(w);
+  if (Object.keys(imp.settings).length) await saveSettings(imp.settings);
+  ui.imp = null; ui.impBusy = ''; toast('הנתונים יובאו'); render();
+}
+function exportRows() {
+  const ings = byId('ingredients');
+  const L = (k, v) => (TERMS[v] || FREQ[v] || [v])[0];
+  return {
+    'חומרי גלם': S.ingredients.map(g => ({ 'שם חומר הגלם': g.name, 'קטגוריה': g.category, 'ספק': g.supplier, 'מותג / מק"ט': g.brand || '', 'יחידת מידה': UNITS[g.packUnit] || '', 'כמות באריזה': num(g.packQty), 'מחיר אריזה כולל מע"מ (₪)': num(g.packPrice), 'עלות ליחידת מידה (₪)': +unitCost(g).toFixed(4), 'כמה אריזות קונים בחודש (הערכה)': g.monthlyPacks || '', 'מלאי מינימום (באריזות)': g.minStock || '', 'פחת %': num(g.waste), 'קישור ישיר למוצר באתר הספק': g.link || '', 'הערות': g.notes || '' })),
+    'מנות': S.dishes.map(d => { const c = calc(d); return { 'שם המנה': d.name, 'קטגוריה': d.category, 'מחיר מכירה ללקוח כולל מע"מ (₪)': num(d.price), 'כמה נמכר בחודש (הערכה)': num(d.monthlySales), 'עלות חומרי גלם (₪)': +c.direct.toFixed(2), 'עלות מלאה (₪)': +c.full.toFixed(2), 'רווח נקי למנה (₪)': +c.profit.toFixed(2), '% עלות מזון': c.fc == null ? '' : +c.fc.toFixed(1), '% רווח': c.margin == null ? '' : +c.margin.toFixed(1), 'הערות': d.notes || '' }; }),
+    'מתכונים': S.dishes.flatMap(d => (d.items || []).map(l => ({ 'שם המנה': d.name, 'מרכיב': ings[l.ingId] ? ings[l.ingId].name : '', 'כמות למנה': num(l.qty), 'יחידה': ings[l.ingId] ? baseUnitLabel(ings[l.ingId]) : '', 'עלות המרכיב במנה (₪)': +lineCost(l, ings).toFixed(3) }))),
+    'ספקים': S.suppliers.map(s => ({ 'שם הספק': s.name, 'מה קונים ממנו': s.buys || '', 'איש קשר': s.contact || '', 'טלפון': s.phone || '', 'אימייל': s.email || '', 'אתר / קישור להזמנה': s.website || '', 'תנאי תשלום': L('t', s.terms), 'אמצעי תשלום': s.method || '', 'הערות': s.notes || '' })),
+    'הוצאות קבועות': S.recurring.filter(r => r.kind !== 'variable').map(r => ({ 'שם ההוצאה': r.name, 'קטגוריה': r.category, 'סכום לתשלום כולל מע"מ (₪)': num(r.amount), 'תדירות': L('f', r.freq || 'monthly'), 'סכום חודשי (₪)': +recMonthly(r).toFixed(2), 'למי משלמים': r.payee || '', 'אמצעי תשלום': r.method || '', 'הערות': r.notes || '' })),
+    'הוצאות שוטפות': S.recurring.filter(r => r.kind === 'variable').map(r => ({ 'שם ההוצאה': r.name, 'קטגוריה': r.category, 'סכום ממוצע בחודש כולל מע"מ (₪)': num(r.amount), 'בחודש חלש (₪)': r.low || '', 'בחודש חזק (₪)': r.high || '', 'למי משלמים': r.payee || '', 'אמצעי תשלום': r.method || '', 'הערות': r.notes || '' })),
+    'הכנסות': S.channels.map(r => ({ 'ערוץ הכנסה': r.name, 'הכנסה ממוצעת בחודש כולל מע"מ (₪)': num(r.avg), 'בחודש חלש (₪)': num(r.low), 'בחודש חזק (₪)': num(r.high), 'עמלה (%)': num(r.fee), 'מאיפה המספר?': r.source || '', 'הערות': r.notes || '' })),
+    'חשבוניות ספקים': S.invoices.map(invRow),
+    'יומן הוצאות': S.expenses.slice().sort((a, b) => String(a.date).localeCompare(b.date)).map(r => ({ 'תאריך': r.date, 'קטגוריה': r.category, 'תיאור': r.desc, 'ספק / למי': r.supplier || '', 'סכום': num(r.amount), 'אמצעי תשלום': r.method || '' })),
+    'יומן הכנסות': S.income.slice().sort((a, b) => String(a.date).localeCompare(b.date)).map(r => ({ 'תאריך': r.date, 'ערוץ': r.category, 'תיאור': r.desc, 'סכום': num(r.amount) })),
+  };
+}
+function invRow(i) { const due = dueDate(i); return { 'מספר חשבונית': i.number, 'ספק': i.supplier, 'תאריך חשבונית': i.date, 'סכום כולל מע"מ (₪)': num(i.amount), 'תנאי תשלום': (TERMS[i.terms] || TERMS.immediate)[0], 'תאריך אחרון לתשלום': due ? ymd(due) : '', 'סטטוס תשלום': INV_STATUS[i.status || 'unpaid'], 'תאריך תשלום בפועל': i.paidDate || '', 'אמצעי תשלום': i.method || '', 'הועבר לרו"ח?': i.sentToAccountant ? 'כן' : 'לא', 'קובץ': i.fileName || '', 'הערות': i.notes || '' }; }
+function makeBook(sheets) {
+  const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] };
+  for (const [n, rows] of Object.entries(sheets)) { const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{}]); ws['!cols'] = Object.keys(rows[0] || {}).map(k => ({ wch: Math.max(10, Math.min(36, k.length + 2)) })); XLSX.utils.book_append_sheet(wb, ws, n.slice(0, 31)); }
+  return XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+}
+async function saveFile(filename, data) {
+  const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  if (downloads) { try { await downloads.save({ filename, data: blob }); return true; } catch (e) { if (e && e.code === 'declined') return false; toast('השמירה לא הושלמה'); return false; } }
+  if (mode === 'local') { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); return true; }
+  toast('הורדת קבצים לא זמינה בתצוגה הזו'); return false;
+}
+function exportAll() { if (typeof XLSX === 'undefined') return toast('ספריית האקסל לא נטענה'); saveFile(`melody-finance-${today()}.xlsx`, makeBook(exportRows())); }
+async function exportAccountant() {
+  if (typeof XLSX === 'undefined') return toast('ספריית האקסל לא נטענה');
+  const list = S.invoices.filter(i => !i.sentToAccountant).sort((a, b) => String(a.date).localeCompare(b.date));
+  const ok = await saveFile(`חשבוניות-לרו"ח-${today()}.xlsx`, makeBook({ 'חשבוניות': list.map(invRow) }));
+  if (ok) { await bulk(list.map(i => () => patch('invoices', i.id, { sentToAccountant: true }))); toast(`${list.length} חשבוניות סומנו כהועברו לרו"ח`); }
+}
+
+boot();
+
+</script>

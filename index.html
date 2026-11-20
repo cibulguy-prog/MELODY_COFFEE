@@ -125,6 +125,7 @@ small.note{color:var(--muted);font-size:.8rem}
       <svg class="cup" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 11h17v9a7 7 0 0 1-7 7h-3a7 7 0 0 1-7-7z" fill="var(--accent)"/><path d="M23 13h2.5a3.5 3.5 0 0 1 0 7H23" fill="none" stroke="var(--accent)" stroke-width="2.4"/><path d="M11 4c-1.5 2 1.5 3 0 5M16 4c-1.5 2 1.5 3 0 5" stroke="var(--crema)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
       <h1>קופת מלודי</h1>
       <span class="grow"></span>
+      <span id="syncInd" hidden></span>
       <label class="month" for="monthSel">חודש <input type="month" id="monthSel"></label>
     </div>
     <nav class="tabs" id="tabs"></nav>
@@ -133,6 +134,10 @@ small.note{color:var(--muted);font-size:.8rem}
 <main class="wrap" id="app"><div class="empty">טוען נתונים…</div></main>
 <div class="toast" id="toast" hidden><div></div></div>
 
+<script>
+/* ===== הגדרה: מדביקים כאן את כתובת ה-Web app של Apps Script (ראו SETUP.md). ריק = כל משתמש יתבקש להדביק בעצמו. ===== */
+window.MELODY_CONFIG = { sheetsUrl: 'https://script.google.com/macros/s/AKfycbwsHtNMcoXTBshaNy6-lQ9NzLV4xgNYJjghqUgO35uWGI0zsedwCCvORoiqykpfJV5c/exec' };
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 // נתוני דוגמה בלבד – כל רשומה מסומנת sample:true. מוחלפים בנתונים האמיתיים של בעל העסק.
@@ -327,8 +332,76 @@ function saveLocal() { try { const o = { settings: S.settings }; COLS.forEach(c 
 const chains = {};
 function serial(key, fn) { const p = (chains[key] || Promise.resolve()).then(fn, fn); chains[key] = p.catch(() => { }); return p; }
 function clean(o) { const r = {}; for (const k in o) if (k !== 'id' && o[k] !== undefined) r[k] = o[k]; return r; }
+/* ---- גוגל שיטס ---- */
+const CFG = window.MELODY_CONFIG || {};
+const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+const lsSet = (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) { } };
+let sheetsUrl = CFG.sheetsUrl || lsGet('melody-sheets-url');
+let token = lsGet('melody-token');
+const sq = { ops: [], timer: 0, busy: false, fails: 0 };
+async function sheetsCall(payload) {
+  const r = await fetch(sheetsUrl, { method: 'POST', body: JSON.stringify({ token, ...payload }) });
+  const j = await r.json();
+  if (!j.ok) { const e = new Error(j.error); e.code = j.error; throw e; }
+  return j;
+}
+function enqueue(op) { sq.ops.push(op); ui.sync = 'saving'; clearTimeout(sq.timer); sq.timer = setTimeout(flush, 600); scheduleRender(); }
+async function flush() {
+  if (sq.busy || !sq.ops.length) return;
+  sq.busy = true;
+  const ops = sq.ops.splice(0, 200);
+  try { await sheetsCall({ action: 'ops', ops }); sq.fails = 0; ui.sync = sq.ops.length ? 'saving' : 'saved'; }
+  catch (e) {
+    sq.ops.unshift(...ops); sq.fails++;
+    if (e.code === 'auth') { logout('הסיסמה השתנתה. צריך להתחבר מחדש.'); sq.busy = false; return; }
+    ui.sync = 'error';
+    if (sq.fails < 4) sq.timer = setTimeout(flush, 2000 * sq.fails);
+    else toast('השמירה לגוגל שיטס נכשלה. בדוק חיבור לאינטרנט ולחץ "שמירה עכשיו".');
+  }
+  sq.busy = false; scheduleRender();
+  if (sq.ops.length && ui.sync !== 'error') sq.timer = setTimeout(flush, 300);
+}
+async function sheetsLoad(silent) {
+  if (sq.ops.length || sq.busy) return;
+  try {
+    const j = await sheetsCall({ action: 'all' });
+    if (sq.ops.length || sq.busy) return;
+    COLS.forEach(c => (S[c] = j.data[c] || []));
+    S.settings = { ...DEF, ...(j.settings || {}) };
+    ui.sheetUrl = j.sheetUrl; mode = 'sheets'; ui.loginErr = '';
+    scheduleRender();
+  } catch (e) {
+    if (e.code === 'auth') logout(token ? (silent ? 'צריך להתחבר מחדש.' : 'סיסמה שגויה.') : 'למערכת הוגדרה סיסמה. צריך להקליד אותה.');
+    else if (!silent) { mode = 'login'; ui.loginErr = 'לא הצלחתי להתחבר לגיליון. בדוק את הכתובת והחיבור לאינטרנט.'; render(); }
+  }
+}
+function logout(msg) { token = ''; lsSet('melody-token', ''); mode = 'login'; ui.loginErr = msg || ''; render(); }
+async function login(url, pass) {
+  if (url) { sheetsUrl = url.trim(); lsSet('melody-sheets-url', sheetsUrl); }
+  token = pass; lsSet('melody-token', pass);
+  ui.loginErr = ''; mode = 'loading'; render();
+  await sheetsLoad(false);
+}
+async function uploadFile(file) {
+  if (mode === 'db' && assets) { const r = await assets.upload(file); return { fileId: r.id, fileUrl: '' }; }
+  if (mode === 'sheets') {
+    const data = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = rej; fr.readAsDataURL(file); });
+    const j = await sheetsCall({ action: 'upload', name: file.name, mimeType: file.type || 'application/pdf', data });
+    return { fileId: j.id, fileUrl: j.url };
+  }
+  throw new Error('no_upload');
+}
+const canUpload = () => !readonly && ((mode === 'db' && !!assets) || mode === 'sheets');
+const fileHref = i => i.fileUrl || (i.fileId ? '/_blob/' + i.fileId : '');
+
 async function put(col, obj) {
   if (!obj.id) obj.id = newId(col[0]);
+  if (mode === 'sheets') {
+    const i = S[col].findIndex(x => x.id === obj.id);
+    if (i >= 0) S[col][i] = { ...obj }; else S[col].push({ ...obj });
+    enqueue({ op: 'put', col, id: obj.id, obj: clean(obj) }); scheduleRender();
+    return obj.id;
+  }
   if (mode === 'db') {
     const body = clean(obj);
     try { await serial(col + '/' + obj.id, () => db.collection(col).doc(obj.id).set(body)); }
@@ -342,12 +415,14 @@ async function put(col, obj) {
 }
 function patch(col, id, part) { const cur = S[col].find(x => x.id === id); if (!cur) return; return put(col, { ...cur, ...part, sample: false }); }
 async function del(col, id) {
+  if (mode === 'sheets') { S[col] = S[col].filter(x => x.id !== id); enqueue({ op: 'del', col, id }); scheduleRender(); return; }
   if (mode === 'db') { try { await serial(col + '/' + id, () => db.collection(col).doc(id).delete()); } catch (e) { onWriteErr(e); } }
   else { S[col] = S[col].filter(x => x.id !== id); saveLocal(); scheduleRender(); }
 }
 async function saveSettings(part) {
   S.settings = { ...S.settings, ...part };
   if (mode === 'db') { const body = {}; for (const k in S.settings) if (JSON.stringify(S.settings[k]) !== JSON.stringify(DEF[k])) body[k] = S.settings[k]; try { await serial('settings', () => db.doc('settings/main').set(body)); } catch (e) { onWriteErr(e); } }
+  else if (mode === 'sheets') enqueue({ op: 'settings', data: part });
   else saveLocal();
   scheduleRender();
 }
@@ -365,7 +440,17 @@ async function boot() {
   window.addEventListener('hashchange', () => { route = routeFromHash(); render(); window.scrollTo(0, 0); });
   route = routeFromHash();
   const cl = window.claude;
-  if (!cl || !cl.use) { mode = 'local'; loadLocal(); render(); return; }
+  if (!cl || !cl.use) {
+    if (lsGet('melody-local') !== '1') {
+      if (!sheetsUrl) { mode = 'login'; render(); return; }
+      render(); await sheetsLoad(false);
+      setInterval(() => { if (document.visibilityState === 'visible' && mode === 'sheets') sheetsLoad(true); }, 60000);
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && mode === 'sheets') sheetsLoad(true); });
+      window.addEventListener('beforeunload', e => { if (sq.ops.length) { flush(); e.preventDefault(); e.returnValue = ''; } });
+      return;
+    }
+    mode = 'local'; loadLocal(); render(); return;
+  }
   render();
   try { db = await cl.use('db'); } catch (e) { db = null; }
   if (!db) { mode = 'local'; loadLocal(); render(); return; }
@@ -470,18 +555,35 @@ function render() {
   const a = document.activeElement, fid = a && a.id, sel = a && a.selectionStart != null ? [a.selectionStart, a.selectionEnd] : null;
   $('#tabs').innerHTML = ROUTES.map(([k, l]) => `<a href="#${k}" ${k === route ? 'aria-current="page"' : ''}>${l}</a>`).join('');
   const app = $('#app');
+  const si = $('#syncInd');
+  if (si) { si.hidden = mode !== 'sheets'; si.innerHTML = ui.sync === 'saving' ? '<span class="chip">שומר…</span>' : ui.sync === 'error' ? '<button class="chip bad" data-act="flushNow" style="border:0;cursor:pointer">השמירה נכשלה · שמירה עכשיו</button>' : ui.sync === 'saved' ? '<span class="chip good">נשמר</span>' : ''; }
   if (mode === 'loading') { app.innerHTML = '<div class="empty">טוען נתונים…</div>'; return; }
+  if (mode === 'login') { app.innerHTML = loginPage(); return; }
   let html = '';
   if (ui.slow) html += `<div class="banner"><b>הנתונים עוד לא נטענו במלואם.</b> ייתכן שמה שמוצג לא מעודכן.</div>`;
   if (readonly) html += `<div class="banner"><b>מצב צפייה.</b> אפשר לראות הכול, אבל רק בעל העסק או עורך יכול לשנות נתונים.</div>`;
   if (hasSample()) html += `<div class="banner"><span style="flex:1 1 200px"><b>נתוני דוגמה</b> להמחשה בלבד, עד שיגיעו הנתונים של בעל העסק.</span>${route !== 'data' ? '<a class="btn" href="#data">ייבוא מאקסל</a>' : ''}</div>`;
-  if (mode === 'local') html += `<div class="banner" style="border-color:var(--line);background:var(--sunk)"><span class="muted">קובץ מקומי: הנתונים נשמרים רק בדפדפן הזה.</span></div>`;
+  if (mode === 'sheets' && !COLS.some(c => S[c].length) && route !== 'data') html += `<div class="banner" style="border-color:var(--accent);background:var(--accent-soft)"><span style="flex:1 1 200px">הגיליון ריק עדיין. מתחילים בייבוא האקסל של בעל העסק, או בטעינת נתוני דוגמה כדי לראות איך זה עובד.</span><a class="btn" href="#data">ייבוא נתונים</a></div>`;
+  if (mode === 'local') html += `<div class="banner" style="border-color:var(--line);background:var(--sunk)"><span class="muted" style="flex:1 1 200px">מצב מקומי: הנתונים נשמרים רק בדפדפן הזה.</span><button class="btn" data-act="goSheets">חיבור לגוגל שיטס</button></div>`;
   html += (PAGES[route] || PAGES.overview)();
   app.innerHTML = html;
   if (fid) { const el = document.getElementById(fid); if (el) { el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { } } }
 }
 
 const PAGES = {};
+function loginPage() {
+  const needUrl = !CFG.sheetsUrl;
+  return `<section class="panel" style="max-width:440px;margin:24px auto;width:100%">
+    <h2 style="margin-bottom:6px">כניסה למערכת</h2>
+    <p class="muted" style="margin:0 0 14px">הנתונים נשמרים בגוגל שיטס של העסק. ${needUrl ? 'מדביקים את כתובת הסקריפט פעם אחת בכל מכשיר.' : 'מקלידים את הסיסמה פעם אחת בכל מכשיר.'}</p>
+    <form id="loginForm" class="grid" style="gap:10px">
+      ${needUrl ? `<label class="field" for="lg-url">כתובת הסקריפט (Web app URL)<input id="lg-url" dir="ltr" type="url" required value="${esc(sheetsUrl)}" placeholder="https://script.google.com/macros/s/…/exec"></label>` : ''}
+      <label class="field" for="lg-pass">סיסמה ${needUrl ? '<small class="note">(אם הוגדרה)</small>' : ''}<input id="lg-pass" type="password" ${needUrl ? '' : 'required'} autocomplete="current-password"></label>
+      ${ui.loginErr ? `<p class="neg" style="margin:0">${esc(ui.loginErr)}</p>` : ''}
+      <button class="btn pri" type="submit">כניסה</button>
+    </form>
+    <p style="margin:14px 0 0"><button class="btn ghost" data-act="goLocal" style="color:var(--muted)">לנסות בלי חיבור (הנתונים יישמרו רק במכשיר הזה)</button></p></section>`;
+}
 
 /* ---------- נושא פתוח: תיעוד מכירות ---------- */
 const SALES_OPTIONS = [
@@ -855,7 +957,7 @@ PAGES.invoices = () => {
     <td><select id="invoices-${i.id}-terms" data-col="invoices" data-id="${i.id}" data-f="terms" ${dis()}>${kvOpts(TERMS, i.terms || 'immediate')}</select></td>
     <td class="num">${due ? fmtD(ymd(due)) : ''}</td><td><span class="chip ${st[2]}">${esc(st[1])}</span></td>
     <td><select id="invoices-${i.id}-status" data-col="invoices" data-id="${i.id}" data-f="status" ${dis()}>${kvOpts(INV_STATUS, i.status || 'unpaid')}</select>${i.status === 'paid' && i.paidDate ? `<br><small class="note">${fmtD(i.paidDate)}</small>` : ''}</td>
-    <td>${i.fileId ? `<a href="/_blob/${esc(i.fileId)}" target="_blank" rel="noopener">${esc(i.fileName || 'צפייה')}</a>` : assets && !readonly ? `<label class="btn" for="up-${i.id}">העלאה</label><input type="file" id="up-${i.id}" accept="application/pdf,image/*" data-upload="${i.id}" hidden>` : '<span class="muted">—</span>'}</td>
+    <td>${fileHref(i) ? `<a href="${esc(fileHref(i))}" target="_blank" rel="noopener">${esc(i.fileName || 'צפייה')}</a>` : canUpload() ? `<label class="btn" for="up-${i.id}">העלאה</label><input type="file" id="up-${i.id}" accept="application/pdf,image/*" data-upload="${i.id}" hidden>` : '<span class="muted">—</span>'}</td>
     <td><input type="checkbox" id="invoices-${i.id}-sent" data-col="invoices" data-id="${i.id}" data-f="sentToAccountant" data-bool ${i.sentToAccountant ? 'checked' : ''} ${dis()} aria-label="הועבר לרואת החשבון"></td>
     <td>${delBtn('invoices', i.id, 'מחיקה')}</td></tr>`).join('') || `<tr><td colspan="11" class="empty">אין חשבוניות בתצוגה הזו.</td></tr>`}
   </tbody></table></div>
@@ -877,7 +979,7 @@ function invForm() {
     <label class="field" for="ni-amount">סכום כולל מע"מ<input id="ni-amount" type="number" step="any" inputmode="decimal" data-new="amount" value="${esc(f.amount)}"></label>
     <label class="field" for="ni-terms">תנאי תשלום<select id="ni-terms" data-new="terms"><option value="">לפי הספק</option>${kvOpts(TERMS, f.terms)}</select></label>
     <label class="field" for="ni-status">סטטוס<select id="ni-status" data-new="status">${kvOpts(INV_STATUS, f.status)}</select></label>
-    ${assets ? `<label class="field" for="ni-file">קובץ PDF או צילום<input id="ni-file" type="file" accept="application/pdf,image/*"></label>` : '<p class="muted" style="margin:0">העלאת קבצים זמינה בקישור המפורסם של המערכת.</p>'}
+    ${canUpload() ? `<label class="field" for="ni-file">קובץ PDF או צילום<input id="ni-file" type="file" accept="application/pdf,image/*"></label>` : '<p class="muted" style="margin:0">העלאת קבצים זמינה כשהמערכת מחוברת לגוגל שיטס.</p>'}
   </div><div class="row" style="margin-top:10px"><button class="btn pri" data-act="saveInv">שמירת חשבונית</button><small class="note">ריק בתנאי תשלום = לוקח את התנאי שמוגדר לספק.</small></div></section>`;
 }
 
@@ -909,6 +1011,12 @@ PAGES.data = () => {
       <small class="note">"החלפה" מוחקת את כל נתוני הדוגמה ואת מה שנמצא כרגע בגיליונות שיובאו, ושומרת את השאר.</small></div>` : ''}
     ${ui.impBusy ? `<p class="muted">${esc(ui.impBusy)}</p>` : ''}
   </section>
+  ${mode === 'sheets' ? `<section class="panel"><h3>חיבור לגוגל שיטס</h3><div class="row">
+    ${ui.sheetUrl ? `<a class="btn" href="${esc(ui.sheetUrl)}" target="_blank" rel="noopener">פתיחת הגיליון ↗</a>` : ''}
+    <button class="btn" data-act="refresh">רענון נתונים</button>
+    ${!COLS.some(c => S[c].length) ? '<button class="btn" data-act="loadSample">טעינת נתוני דוגמה</button>' : ''}
+    ${token ? '<button class="btn ghost" data-act="logout">יציאה מהמכשיר הזה</button>' : ''}</div>
+    <small class="note">כל שינוי באתר נשמר לגיליון תוך שנייה-שתיים. שינויים של אחרים מופיעים כאן תוך דקה, או מיד בלחיצה על "רענון".</small></section>` : ''}
   <section class="panel"><h3>גיבוי וייצוא</h3><div class="row">
     <button class="btn" data-act="exportAll">ייצוא כל הנתונים לאקסל</button>
     ${hasSample() ? `${delBtn('sample', 'all', 'מחיקת נתוני הדוגמה').replace('>✕<', '>מחיקת נתוני הדוגמה<')}` : ''}
@@ -968,6 +1076,12 @@ document.addEventListener('click', async e => {
   if (a !== 'del' && ui.confirm) ui.confirm = null;
   if (a === 'openDish') { ui.dishId = ui.dishId === id ? null : id; render(); if (ui.dishId) $('#dishEditor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   if (a === 'closeDish') { ui.dishId = null; render(); return; }
+  if (a === 'flushNow') { sq.fails = 0; ui.sync = 'saving'; flush(); render(); return; }
+  if (a === 'logout') { logout(''); return; }
+  if (a === 'goLocal') { lsSet('melody-local', '1'); mode = 'local'; loadLocal(); render(); return; }
+  if (a === 'goSheets') { lsSet('melody-local', ''); location.reload(); return; }
+  if (a === 'refresh') { sheetsLoad(false).then(() => toast('הנתונים עודכנו')); return; }
+  if (a === 'loadSample') { const s = buildSample(); const w = []; COLS.forEach(c => (s[c] || []).forEach(o => w.push(() => put(c, o)))); await bulk(w); toast('נתוני הדוגמה נטענו'); return; }
   if (a === 'showIssue') { setTimeout(() => $('#salesIssue')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 250); return; }
   if (a === 'optDish') { ui.optId = id; ui.sim = null; ui.claude = ''; return; }
   if (a === 'addDish') { const nid = newId('d'); await put('dishes', { id: nid, name: 'מנה חדשה', category: '', price: 0, monthlySales: 0, items: [] }); ui.dishId = nid; render(); $('#dn-' + nid)?.select(); return; }
@@ -998,6 +1112,7 @@ document.addEventListener('click', async e => {
   if (a === 'impApply') { applyImport(b.dataset.mode); return; }
   if (a === 'impCancel') { ui.imp = null; render(); return; }
 });
+document.addEventListener('submit', e => { if (e.target.id === 'loginForm') { e.preventDefault(); login($('#lg-url') ? $('#lg-url').value : '', $('#lg-pass').value); } });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.confirm) { ui.confirm = null; render(); } });
 
 function addRow(col, kind) {
@@ -1030,14 +1145,14 @@ async function saveNewInvoice() {
   const sup = S.suppliers.find(s => s.name === f.supplier);
   const inv = { id: newId('v'), supplier: f.supplier, number: f.number, date: f.date || today(), amount: num(f.amount), terms: f.terms || (sup && sup.terms) || 'immediate', status: f.status || 'unpaid', paidDate: f.status === 'paid' ? today() : '', method: '', sentToAccountant: false, fileId: '', fileName: '', notes: '' };
   const file = $('#ni-file') && $('#ni-file').files[0];
-  if (file && assets) { try { toast('מעלה קובץ…'); const r = await assets.upload(file); inv.fileId = r.id; inv.fileName = file.name; } catch (e) { toast('העלאת הקובץ נכשלה. החשבונית תישמר בלי קובץ.'); } }
+  if (file && canUpload()) { try { toast('מעלה קובץ…'); const r = await uploadFile(file); inv.fileId = r.fileId; inv.fileUrl = r.fileUrl; inv.fileName = file.name; } catch (e) { toast('העלאת הקובץ נכשלה. החשבונית תישמר בלי קובץ.'); } }
   await put('invoices', inv);
   if (inv.status === 'paid') onInvoiceStatus(inv.id, 'paid', {});
   ui.newInv = null; ui.invForm = false; toast('החשבונית נשמרה'); render();
 }
 async function uploadFor(id, file) {
-  if (!file || !assets) return;
-  try { toast('מעלה קובץ…'); const r = await assets.upload(file); await patch('invoices', id, { fileId: r.id, fileName: file.name }); toast('הקובץ צורף'); }
+  if (!file || !canUpload()) return;
+  try { toast('מעלה קובץ…'); const r = await uploadFile(file); await patch('invoices', id, { fileId: r.fileId, fileUrl: r.fileUrl, fileName: file.name }); toast('הקובץ צורף'); }
   catch (e) { toast('העלאת הקובץ נכשלה' + (e && e.code === 'too_large' ? ': הקובץ גדול מדי' : '')); }
 }
 async function removeSample() {
@@ -1198,7 +1313,7 @@ function exportRows() {
     'יומן הכנסות': S.income.slice().sort((a, b) => String(a.date).localeCompare(b.date)).map(r => ({ 'תאריך': r.date, 'ערוץ': r.category, 'תיאור': r.desc, 'סכום': num(r.amount) })),
   };
 }
-function invRow(i) { const due = dueDate(i); return { 'מספר חשבונית': i.number, 'ספק': i.supplier, 'תאריך חשבונית': i.date, 'סכום כולל מע"מ (₪)': num(i.amount), 'תנאי תשלום': (TERMS[i.terms] || TERMS.immediate)[0], 'תאריך אחרון לתשלום': due ? ymd(due) : '', 'סטטוס תשלום': INV_STATUS[i.status || 'unpaid'], 'תאריך תשלום בפועל': i.paidDate || '', 'אמצעי תשלום': i.method || '', 'הועבר לרו"ח?': i.sentToAccountant ? 'כן' : 'לא', 'קובץ': i.fileName || '', 'הערות': i.notes || '' }; }
+function invRow(i) { const due = dueDate(i); return { 'מספר חשבונית': i.number, 'ספק': i.supplier, 'תאריך חשבונית': i.date, 'סכום כולל מע"מ (₪)': num(i.amount), 'תנאי תשלום': (TERMS[i.terms] || TERMS.immediate)[0], 'תאריך אחרון לתשלום': due ? ymd(due) : '', 'סטטוס תשלום': INV_STATUS[i.status || 'unpaid'], 'תאריך תשלום בפועל': i.paidDate || '', 'אמצעי תשלום': i.method || '', 'הועבר לרו"ח?': i.sentToAccountant ? 'כן' : 'לא', 'קובץ': i.fileUrl || i.fileName || '', 'הערות': i.notes || '' }; }
 function makeBook(sheets) {
   const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] };
   for (const [n, rows] of Object.entries(sheets)) { const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{}]); ws['!cols'] = Object.keys(rows[0] || {}).map(k => ({ wch: Math.max(10, Math.min(36, k.length + 2)) })); XLSX.utils.book_append_sheet(wb, ws, n.slice(0, 31)); }
@@ -1207,7 +1322,7 @@ function makeBook(sheets) {
 async function saveFile(filename, data) {
   const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   if (downloads) { try { await downloads.save({ filename, data: blob }); return true; } catch (e) { if (e && e.code === 'declined') return false; toast('השמירה לא הושלמה'); return false; } }
-  if (mode === 'local') { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); return true; }
+  if (mode !== 'db') { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); return true; }
   toast('הורדת קבצים לא זמינה בתצוגה הזו'); return false;
 }
 function exportAll() { if (typeof XLSX === 'undefined') return toast('ספריית האקסל לא נטענה'); saveFile(`melody-finance-${today()}.xlsx`, makeBook(exportRows())); }
